@@ -109,7 +109,7 @@ while True:
     # if no positions are open
 
     start_robot("EURUSD_i")
-    start_robot("XAUUSD_i")
+    # start_robot("XAUUSD_i")
 
     # check for signal every 1 second
     time.sleep(1)
