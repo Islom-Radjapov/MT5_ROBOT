@@ -91,8 +91,8 @@ def start_robot(symbol):
 
 initialize = mt5.initialize()
 
-login = 51465031
-password = 'ma5M7GU8W'
+login = 51465038
+password = '0GE9H9so1'
 server = 'Alpari-MT5-Demo'
 
 mt5.login(login=login, password=password, server=server)
