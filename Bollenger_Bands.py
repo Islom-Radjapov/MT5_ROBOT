@@ -73,26 +73,82 @@ def get_signal(symbol):
     else:
         return [None, None]
 
+
+def trading_takeprofit(position, tick):
+    position = position[0]
+    if position.type == 1: # sell
+        distance = abs(round(tick.bid - position.tp, 6))
+        if distance <= 0.00025:
+            tp = position.tp - 0.0025
+            sl = tick.bid + 0.00015
+            request = {
+                "action": mt5.TRADE_ACTION_SLTP,
+                "symbol": position.symbol,
+                "volume": position.volume,
+                "type": position.type,
+                "position": position.ticket,
+                "price_open": position.price_open,
+                "sl": sl,
+                "tp": tp,
+                "magic": position.magic,
+                "comment": "python script open",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": mt5.ORDER_FILLING_FOK,
+                "ENUM_ORDER_STATE": mt5.ORDER_FILLING_RETURN,
+            }
+
+            result = mt5.order_send(request)
+            print("Take Profit")
+            print(result)
+            return result
+
+
+    elif position.type == 0: # buy
+        distance = abs(round(position.tp - tick.ask, 6))
+        if distance <= 0.00025:
+            tp = position.tp + 0.0025
+            sl = tick.ask - 0.00015
+            request = {
+                "action": mt5.TRADE_ACTION_SLTP,
+                "symbol": position.symbol,
+                "volume": position.volume,
+                "type": position.type,
+                "position": position.ticket,
+                "price_open": position.price_open,
+                "sl": sl,
+                "tp": tp,
+                "magic": position.magic,
+                "comment": "python script open",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": mt5.ORDER_FILLING_FOK,
+                "ENUM_ORDER_STATE": mt5.ORDER_FILLING_RETURN,
+            }
+
+            result = mt5.order_send(request)
+            print("Take Profit")
+            print(result)
+            return result
+
+
 def start_robot(symbol):
     position = positions_get(symbol)
-
+    tick = mt5.symbol_info_tick(symbol)
     if not position:
         signal, standard_deviation = get_signal(symbol)
-
-        tick = mt5.symbol_info_tick(symbol)
 
         if signal == 'buy':
             market_order(symbol, VOLUME, 'buy', DEVIATION, MAGIC, tick.bid - SL_SD * standard_deviation, tick.bid + TP_SD * standard_deviation)
 
         elif signal == 'sell':
             market_order(symbol, VOLUME, 'sell', DEVIATION, MAGIC, tick.bid + SL_SD * standard_deviation, tick.bid - TP_SD * standard_deviation)
-
+    else:
+        trading_takeprofit(position=position, tick=tick)
 
 
 initialize = mt5.initialize()
 
-login = 51465038
-password = '0GE9H9so1'
+login = 51465031
+password = 'ma5M7GU8W'
 server = 'Alpari-MT5-Demo'
 
 mt5.login(login=login, password=password, server=server)
@@ -103,13 +159,15 @@ if initialize:
     print('Balance=>', mt5.account_info().balance)
     print('Server=>', mt5.account_info().server)
 
-# strategy loop
-while True:
-    # strategy logic
-    # if no positions are open
+    # strategy loop
+    while True:
+        # strategy logic
+        # if no positions are open
 
-    start_robot("EURUSD_i")
-    # start_robot("XAUUSD_i")
+        start_robot("EURUSD_i")
+        # start_robot("XAUUSD_i")
 
-    # check for signal every 1 second
-    time.sleep(1)
+        # check for signal every 1 second
+        time.sleep(1)
+else:
+    print("NO Connected")
