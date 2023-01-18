@@ -23,7 +23,8 @@ def RSI(df):
     # the RSI is calculated based on the Relative Strength using the following formula
     df['rsi_14'] = 100 - (100 / (df['rs'] + 1))
 
-    return df['rsi_14']
+    return df['rsi_14'].values[-1]
+
 def market_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit):
     tick = mt5.symbol_info_tick(symbol)
 
@@ -44,23 +45,10 @@ def market_order(symbol, volume, order_type, deviation, magic, stoploss, takepro
         "type_time": mt5.ORDER_TIME_GTC,
         "type_filling": mt5.ORDER_FILLING_IOC,
     }
-    order_result = mt5.order_send(request)
-    print(order_result)
-
+    order_result = mt5.order_send(request)[10]
+    order_type = {0: 'buy', 1: 'sell'}
+    print("ORDER=>", order_type[order_result.type], "price=>", order_result.price, "stoploss=>", order_result.sl, "takeprofit=>", order_result.tp)
     return order_result
-
-initialize = mt5.initialize()
-
-login = 51466985
-password = 'N4ry9n7vi'
-server = 'Alpari-MT5-Demo'
-
-mt5.login(login=login, password=password, server=server)
-
-# symbol = 'EURUSD_i'
-# timeframe = mt5.TIMEFRAME_D1
-# start_pos = 0
-# num_bars = 1000
 
 def get_df(symbol, timeframe, start_pos, num_bars):
     bars = mt5.copy_rates_from_pos(symbol, timeframe, start_pos, num_bars)
@@ -69,29 +57,114 @@ def get_df(symbol, timeframe, start_pos, num_bars):
     df['time'] = pd.to_datetime(df['time'], unit='s')
     return df
 
+def ATR(df):
+    atr_period = 14  # defining the atr period to 14
+
+    # calculating the range of each candle
+    df['range'] = df['high'] - df['low']
+
+    # calculating the average value of ranges
+    df['atr_14'] = df['range'].rolling(atr_period).mean()
+
+    return df['atr_14'].values[-1]
+
+
+def trading_takeprofit(position, tick):
+    position = position[0]
+    if position.type == 1: # sell
+        distance = abs(round(tick.bid - position.tp, 6))
+        if distance <= 0.0001:
+            tp = tick.bid - 0.0001
+            sl = tick.ask + 0.0001
+            request = {
+                "action": mt5.TRADE_ACTION_SLTP,
+                "symbol": position.symbol,
+                "volume": position.volume,
+                "type": position.type,
+                "position": position.ticket,
+                "price_open": position.price_open,
+                "sl": sl,
+                "tp": tp,
+                "magic": position.magic,
+                "comment": "python script open",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": mt5.ORDER_FILLING_FOK,
+                "ENUM_ORDER_STATE": mt5.ORDER_FILLING_RETURN,
+            }
+
+            result = mt5.order_send(request)
+            # print("Take Profit")
+            # print(result)
+            return result
+
+
+    elif position.type == 0: # buy
+        distance = abs(round(position.tp - tick.ask, 6))
+        if distance <= 0.0001:
+            tp = tick.ask + 0.0001
+            sl = tick.bid - 0.0001
+            request = {
+                "action": mt5.TRADE_ACTION_SLTP,
+                "symbol": position.symbol,
+                "volume": position.volume,
+                "type": position.type,
+                "position": position.ticket,
+                "price_open": position.price_open,
+                "sl": sl,
+                "tp": tp,
+                "magic": position.magic,
+                "comment": "python script open",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": mt5.ORDER_FILLING_FOK,
+                "ENUM_ORDER_STATE": mt5.ORDER_FILLING_RETURN,
+            }
+
+            result = mt5.order_send(request)
+            # print("Take Profit")
+            # print(result)
+            return result
+
+
+
+initialize = mt5.initialize()
 if initialize:
+    login = 51466985
+    password = 'N4ry9n7vi'
+    server = 'Alpari-MT5-Demo'
+
+    mt5.login(login=login, password=password, server=server)
     print('Connected to MetaTrader5')
     print('Login=>' , mt5.account_info().login)
     print('Balance=>', mt5.account_info().balance)
     print('Server=>', mt5.account_info().server)
 
-    symbol = "EURUSD_i"
+    SYMBOL = "EURUSD_i"
     # lot = 0.01
+    # TIMEFRAME = mt5.TIMEFRAME_M1
+    VOLUME = 0.1  # Trade Volume
+    DEVIATION = 20  # Deviation for Order Slippage
+    MAGIC = 10
     # strategy loop
     while True:
         # strategy logic
         # if no positions are open
-        position = positions_get(symbol)
+        position = positions_get(SYMBOL)
+        tick = mt5.symbol_info_tick(SYMBOL)
         if not position:
-            df = get_df(symbol, mt5.TIMEFRAME_M15, 0, 1000)
+            df = get_df(SYMBOL, mt5.TIMEFRAME_M1, 0, 24)
             rsi = RSI(df)
-            if rsi < 20:
-                market_order(symbol, 0.01, "buy", 20, 10, stoploss, takeprofit)
-            elif rsi > 80:
-                market_order(symbol, 0.01, "sell", 20, 10, stoploss, takeprofit)
+            atr = ATR(df)
+            if rsi < 30:
+                # market_order(symbol, VOLUME, 'buy', DEVIATION, MAGIC, tick.bid - SL_SD * standard_deviation, tick.bid + TP_SD * standard_deviation)
+                market_order(symbol=SYMBOL, volume=0.1, order_type="buy", deviation=DEVIATION, magic=MAGIC,
+                             stoploss=tick.bid - atr * 1.5, takeprofit=tick.ask + atr * 1.1)
+            elif rsi > 70:
+                market_order(symbol=SYMBOL, volume=0.1, order_type="sell", deviation=DEVIATION, magic=MAGIC,
+                             stoploss=tick.ask + atr * 1.5, takeprofit=tick.bid - atr * 1.1)
+        else:
+            answer_takeprofit = trading_takeprofit(position=position, tick=tick)  # 'Request executed'  or  'Invalid stops'
+            print(answer_takeprofit)
 
-
-        # check for signal every 1 second
-        time.sleep(1)
 else:
     print('No connection')
+
