@@ -47,7 +47,8 @@ def market_order(symbol, volume, order_type, deviation, magic, stoploss, takepro
     }
     order_result = mt5.order_send(request)[10]
     order_type = {0: 'buy', 1: 'sell'}
-    print("ORDER=>", order_type[order_result.type], "price=>", order_result.price, "stoploss=>", order_result.sl, "takeprofit=>", order_result.tp)
+    print("ORDER=>", order_type[order_result.type], "price=>", round(order_result.price, 5),
+          "stoploss=>", round(order_result.sl, 5), "takeprofit=>", round(order_result.tp, 5))
     return order_result
 
 def get_df(symbol, timeframe, start_pos, num_bars):
@@ -72,10 +73,10 @@ def ATR(df):
 def trading_takeprofit(position, tick):
     position = position[0]
     if position.type == 1: # sell
-        distance = abs(round(tick.bid - position.tp, 6))
+        distance = abs(round(tick.bid - position.tp, 5))
         if distance <= 0.0001:
-            tp = tick.bid - 0.0001
-            sl = tick.ask + 0.0001
+            tp = tick.bid - 0.0002
+            sl = tick.ask + 0.0002
             request = {
                 "action": mt5.TRADE_ACTION_SLTP,
                 "symbol": position.symbol,
@@ -93,16 +94,14 @@ def trading_takeprofit(position, tick):
             }
 
             result = mt5.order_send(request)
-            # print("Take Profit")
-            # print(result)
             return result
 
 
     elif position.type == 0: # buy
-        distance = abs(round(position.tp - tick.ask, 6))
+        distance = abs(round(position.tp - tick.ask, 5))
         if distance <= 0.0001:
-            tp = tick.ask + 0.0001
-            sl = tick.bid - 0.0001
+            tp = tick.ask + 0.0002
+            sl = tick.bid - 0.0002
             request = {
                 "action": mt5.TRADE_ACTION_SLTP,
                 "symbol": position.symbol,
@@ -120,8 +119,6 @@ def trading_takeprofit(position, tick):
             }
 
             result = mt5.order_send(request)
-            # print("Take Profit")
-            # print(result)
             return result
 
 
@@ -151,19 +148,23 @@ if initialize:
         position = positions_get(SYMBOL)
         tick = mt5.symbol_info_tick(SYMBOL)
         if not position:
-            df = get_df(SYMBOL, mt5.TIMEFRAME_M1, 0, 24)
+            df = get_df(SYMBOL, mt5.TIMEFRAME_M20, 0, 24)
             rsi = RSI(df)
             atr = ATR(df)
             if rsi < 30:
-                # market_order(symbol, VOLUME, 'buy', DEVIATION, MAGIC, tick.bid - SL_SD * standard_deviation, tick.bid + TP_SD * standard_deviation)
-                market_order(symbol=SYMBOL, volume=0.1, order_type="buy", deviation=DEVIATION, magic=MAGIC,
-                             stoploss=tick.bid - atr * 1.5, takeprofit=tick.ask + atr * 1.1)
+                market_order(symbol=SYMBOL, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
+                             stoploss=tick.bid - atr, takeprofit=tick.ask + atr)
+                print(atr)
             elif rsi > 70:
-                market_order(symbol=SYMBOL, volume=0.1, order_type="sell", deviation=DEVIATION, magic=MAGIC,
-                             stoploss=tick.ask + atr * 1.5, takeprofit=tick.bid - atr * 1.1)
+                market_order(symbol=SYMBOL, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
+                             stoploss=tick.ask + atr, takeprofit=tick.bid - atr)
+                print(atr)
         else:
-            answer_takeprofit = trading_takeprofit(position=position, tick=tick)  # 'Request executed'  or  'Invalid stops'
-            print(answer_takeprofit)
+            answer_takeprofit = trading_takeprofit(position=position, tick=tick)  # 'Request executed'  or  'Invalid stops'  or  'Request rejected'
+            if answer_takeprofit:
+                print(answer_takeprofit[7])
+
+        time.sleep(1)
 
 else:
     print('No connection')
