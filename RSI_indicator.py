@@ -48,10 +48,11 @@ def market_order(symbol, volume, order_type, deviation, magic, stoploss, takepro
         "type_time": mt5.ORDER_TIME_GTC,
         "type_filling": mt5.ORDER_FILLING_IOC,
     }
-    order_result = mt5.order_send(request)[10]
+    order_result = mt5.order_send(request)
     order_type = {0: 'buy', 1: 'sell'}
-    print("ORDER=>", order_type[order_result.type], "price=>", round(order_result.price, 5),
-          "stoploss=>", round(order_result.sl, 5), "takeprofit=>", round(order_result.tp, 5))
+    print("ORDER=>", order_type[order_result[10].type], "price=>", round(order_result[10].price, 5),
+          "stoploss=>", round(order_result[10].sl, 5), "takeprofit=>", round(order_result[10].tp, 5),
+          "Result=>", order_result[7])
     return order_result
 
 def get_df(symbol, timeframe, start_pos, num_bars):
@@ -68,6 +69,35 @@ def ATR(df):
     df['atr_14'] = df['range'].rolling(PERIOD).mean()
 
     return df['atr_14'].values[-1]
+
+
+
+def add_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit):
+    tick = mt5.symbol_info_tick(symbol)
+
+    order_dict = {'buy': 0, 'sell': 1}
+    price_dict = {'buy': tick.ask, 'sell': tick.bid}
+
+    request = {
+        "action": mt5.TRADE_ACTION_DEAL,
+        "symbol": symbol,
+        "volume": volume,
+        "type": order_dict[order_type],
+        "price": price_dict[order_type],
+        "deviation": deviation,
+        "magic": magic,
+        "sl": stoploss,
+        'tp': takeprofit,
+        "comment": "python market order",
+        "type_time": mt5.ORDER_TIME_GTC,
+        "type_filling": mt5.ORDER_FILLING_RETURN,
+    }
+    order_result = mt5.order_send(request)
+    order_type = {0: 'buy', 1: 'sell'}
+    print("ADD ORDER=>", order_type[order_result[10].type], "price=>", round(order_result[10].price, 5),
+          "stoploss=>", round(order_result[10].sl, 5), "takeprofit=>", round(order_result[10].tp, 5))
+    print("Result=>", order_result[7])
+    return order_result
 
 def trading_takeprofit(position, tick):
     if position.type == 1: # sell
@@ -137,7 +167,7 @@ if initialize:
     print('Balance=>', mt5.account_info().balance)
 
     SYMBOL = "EURUSD_i"
-    TIMEFRAME = mt5.TIMEFRAME_M1
+    TIMEFRAME = mt5.TIMEFRAME_M15
     VOLUME = 0.1
     DEVIATION = 20
     MAGIC = 10
@@ -155,28 +185,24 @@ if initialize:
         if not position:
             rsi = RSI(df)
 
-            if rsi < 20:
+            if rsi < 30:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
                              stoploss=tick.bid - atr, takeprofit=tick.ask + atr)
-            elif rsi > 80:
+            elif rsi > 70:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
                              stoploss=tick.ask + atr, takeprofit=tick.bid - atr)
         else:
             position = position[0]
-            if position.type == 1 : # sell
-                if position.bid <= tick.bid + 0.001:
+            if position.type == 1:          # sell
+                if position.price_open + 0.001 <= tick.bid:
                     VOLUME += VOLUME + 0.0002
-                    market_order(symbol=SYMBOL, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid - atr)
-            elif position.type == 0: # buy
-                if position.ask <= tick.ask + 0.001:
+                    add_order(symbol=SYMBOL, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid - atr, stoploss=0.0)
+            elif position.type == 0:        # buy
+                if position.price_open - 0.001 >= tick.ask:
                     VOLUME += VOLUME + 0.0002
-                    market_order(symbol=SYMBOL, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid + atr)
+                    add_order(symbol=SYMBOL, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid + atr, stoploss=0.0)
             else:
                 trading_takeprofit(position=position, tick=tick)
-        
-
-
-        time.sleep(1)
 
 else:
     print('No connection')
