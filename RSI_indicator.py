@@ -5,23 +5,28 @@ import time
 def positions_get(symbol):
     return mt5.positions_get(symbol=symbol)
 
-def RSI(df):
+def RSI(df, periods = 14, ema = True):
+    """
+    Returns a pd.Series with the relative strength index.
+    """
+    close_delta = df['close'].diff()
 
-    # to calculate RSI, we first need to calculate the exponential weighted aveage gain and loss during the period
-    df['gain'] = (df['close'] - df['open']).apply(lambda x: x if x > 0 else 0)
-    df['loss'] = (df['close'] - df['open']).apply(lambda x: -x if x < 0 else 0)
+    # Make two series: one for lower closes and one for higher closes
+    up = close_delta.clip(lower=0)
+    down = -1 * close_delta.clip(upper=0)
 
-    # here we use the same formula to calculate Exponential Moving Average
-    df['ema_gain'] = df['gain'].ewm(span=PERIOD, min_periods=PERIOD).mean()
-    df['ema_loss'] = df['loss'].ewm(span=PERIOD, min_periods=PERIOD).mean()
+    if ema == True:
+        # Use exponential moving average
+        ma_up = up.ewm(com = periods - 1, adjust=True, min_periods = periods).mean()
+        ma_down = down.ewm(com = periods - 1, adjust=True, min_periods = periods).mean()
+    else:
+        # Use simple moving average
+        ma_up = up.rolling(window = periods, adjust=False).mean()
+        ma_down = down.rolling(window = periods, adjust=False).mean()
 
-    # the Relative Strength is the ratio between the exponential avg gain divided by the exponential avg loss
-    df['rs'] = df['ema_gain'] / df['ema_loss']
-
-    # the RSI is calculated based on the Relative Strength using the following formula
-    df['rsi_14'] = 100 - (100 / (df['rs'] + 1))
-
-    return df['rsi_14'].values[-1]
+    rsi = ma_up / ma_down
+    rsi = 100 - (100/(1 + rsi))
+    return rsi.values[-1]
 
 def market_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit):
     tick = mt5.symbol_info_tick(symbol)
@@ -96,11 +101,10 @@ if initialize:
             df = get_df(SYMBOL, TIMEFRAME, 0, 24)
             rsi = RSI(df)
             atr = 2 * ATR(df)
-
-            if rsi < 30:
+            if rsi < 20:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
                              stoploss=tick.bid - atr, takeprofit=tick.ask + atr)
-            elif rsi > 70:
+            elif rsi > 80:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
                              stoploss=tick.ask + atr, takeprofit=tick.bid - atr)
 
