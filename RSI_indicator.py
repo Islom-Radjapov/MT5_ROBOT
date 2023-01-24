@@ -91,7 +91,7 @@ def add_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit
         "magic": magic,
         "sl": stoploss,
         'tp': takeprofit,
-        "comment": "python market order",
+        "comment": "python add order",
         "type_time": mt5.ORDER_TIME_GTC,
         "type_filling": mt5.ORDER_FILLING_RETURN,
     }
@@ -132,57 +132,50 @@ def get_new_volume(volum):
         return 9.64
 
 
-# def trading_takeprofit(position, tick):
-#
-#     if position.type == 1:  # sell
-#         if tick.ask - position.tp <= 0.0001:
-#             tp = tick.ask + 0.0002
-#             sl = tick.ask + 0.0002
-#             request = {
-#                 "action": mt5.TRADE_ACTION_SLTP,
-#                 "symbol": position.symbol,
-#                 "volume": position.volume,
-#                 "type": position.type,
-#                 "position": position.ticket,
-#                 "price_open": position.price_open,
-#                 "sl": sl,
-#                 "tp": tp,
-#                 "magic": position.magic,
-#                 "comment": "python script open",
-#                 "type_time": mt5.ORDER_TIME_GTC,
-#                 "type_filling": mt5.ORDER_FILLING_FOK,
-#                 "ENUM_ORDER_STATE": mt5.ORDER_FILLING_RETURN,
-#             }
-#
-#             result = mt5.order_send(request)
-#             print("Profit")
-#             return result
-#
-#
-#     elif position.type == 0: # buy
-#         distance = abs(round(position.tp - tick.ask, 5))
-#         if distance <= 0.0001:
-#             tp = tick.ask + 0.0002
-#             sl = tick.bid - 0.0002
-#             request = {
-#                 "action": mt5.TRADE_ACTION_SLTP,
-#                 "symbol": position.symbol,
-#                 "volume": position.volume,
-#                 "type": position.type,
-#                 "position": position.ticket,
-#                 "price_open": position.price_open,
-#                 "sl": sl,
-#                 "tp": tp,
-#                 "magic": position.magic,
-#                 "comment": "python script open",
-#                 "type_time": mt5.ORDER_TIME_GTC,
-#                 "type_filling": mt5.ORDER_FILLING_FOK,
-#                 "ENUM_ORDER_STATE": mt5.ORDER_FILLING_RETURN,
-#             }
-#
-#             result = mt5.order_send(request)
-#             print("Profit")
-#             return result
+def trading_takeprofit(position):
+    tick1 = mt5.symbol_info_tick(SYMBOL)
+
+    if position.type == 1:  # sell
+        if tick1.ask - position.tp <= 0.0001:
+            request = {
+                "action": mt5.TRADE_ACTION_SLTP,
+                "symbol": position.symbol,
+                "volume": position.volume,
+                "type": position.type,
+                "position": position.ticket,
+                "price_open": position.price_open,
+                "sl": tick1.ask + 0.00025,
+                "tp": tick1.ask - 0.00025,
+                "magic": position.magic,
+                "comment": "python trading profit",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": mt5.ORDER_FILLING_FOK,
+                "ENUM_ORDER_STATE": mt5.ORDER_FILLING_RETURN,
+            }
+            result = mt5.order_send(request)
+            print("Profit")
+            return result
+
+    elif position.type == 0:    # buy
+        if position.tp - tick1.bid <= 0.0001:
+            request = {
+                "action": mt5.TRADE_ACTION_SLTP,
+                "symbol": position.symbol,
+                "volume": position.volume,
+                "type": position.type,
+                "position": position.ticket,
+                "price_open": position.price_open,
+                "sl": tick1.bid - 0.00025,
+                "tp": tick1.bid + 0.00025,
+                "magic": position.magic,
+                "comment": "python trading profit",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": mt5.ORDER_FILLING_FOK,
+                "ENUM_ORDER_STATE": mt5.ORDER_FILLING_RETURN,
+            }
+            result = mt5.order_send(request)
+            print("Profit")
+            return result
 
 
 initialize = mt5.initialize()
@@ -194,16 +187,16 @@ if initialize:
     mt5.login(login=login, password=password, server=server)
 
     print('Connected to MetaTrader5')
-    print('Login=>' , mt5.account_info().login)
+    print('Login=>', mt5.account_info().login)
     print('Server=>', mt5.account_info().server)
     print('Balance=>', mt5.account_info().balance)
 
 
     SYMBOL = "EURUSD_i"
-    TIMEFRAME = mt5.TIMEFRAME_M5
+    TIMEFRAME = mt5.TIMEFRAME_M15
     PERIOD = 14  # setting the RSI and ATR Period
     VOLUME = 0.01
-    PIPS = 0.0005
+    PIPS = 0.0003
     DEVIATION = 20
     MAGIC = 10
 
@@ -217,26 +210,27 @@ if initialize:
         # order yoq bosa rsi tekshirib tog'ri kesa order ochadi
         if not position:
             rsi = RSI(df, PERIOD)
-            if rsi < 35:
+            if rsi < 30:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
-                             stoploss=0.0, takeprofit=tick.ask + atr)
-            elif rsi > 65:
+                             stoploss=tick.bid - atr, takeprofit=tick.bid + atr)
+            elif rsi > 70:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
-                             stoploss=0.0, takeprofit=tick.bid - atr)
+                             stoploss=tick.ask + atr, takeprofit=tick.ask - atr)
 
         else:
-            position = position[0]
-            if position.type == 1:          # sell
-                if position.price_open + PIPS <= tick.bid:  # # 50 pip minusga kirsa yana sell ochadi
-                    new_volume = get_new_volume(position.volume)
-                    add_order(symbol=SYMBOL, volume=new_volume, order_type="sell", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid - atr, stoploss=0.0)
-
-            elif position.type == 0:        # buy
-                if position.price_open - PIPS >= tick.ask:  # 50 pip minusga kirsa yana buy ochadi
-                    new_volume = get_new_volume(position.volume)
-                    add_order(symbol=SYMBOL, volume=new_volume, order_type="buy", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid + atr, stoploss=0.0)
+            trading_takeprofit(position=position)
+        #     position = position[0]
+        #     if position.type == 1:          # sell
+        #         if position.price_open + PIPS <= tick.bid:  # # 50 pip minusga kirsa yana sell ochadi
+        #             new_volume = get_new_volume(position.volume)
+        #             add_order(symbol=SYMBOL, volume=new_volume, order_type="sell", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid - atr, stoploss=tick.bid + 20 * atr)
+        #
+        #     elif position.type == 0:        # buy
+        #         if position.price_open - PIPS >= tick.ask:  # 50 pip minusga kirsa yana buy ochadi
+        #             new_volume = get_new_volume(position.volume)
+        #             add_order(symbol=SYMBOL, volume=new_volume, order_type="buy", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid + atr, stoploss=tick.bid - 20 * atr)
             # else:
-            #     trading_takeprofit(position=position, tick=tick)
+            #     trading_takeprofit(position=position)
         time.sleep(1)
 else:
     print('No connection')
