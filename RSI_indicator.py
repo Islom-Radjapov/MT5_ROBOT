@@ -70,8 +70,9 @@ def market_order(symbol, volume, order_type, deviation, magic, stoploss, takepro
     }
     order_result = mt5.order_send(request)
     order_type = {0: 'buy', 1: 'sell'}
-    print("ORDER=>", order_type[order_result[10].type], "price=>", round(order_result[10].price, 5),    # "stoploss=>", round(order_result[10].sl, 5),
-          "takeprofit=>", round(order_result[10].tp, 5), "Result=>", order_result[7])
+    print("ORDER=>", order_type[order_result[10].type], "price=>", round(order_result[10].price, 5),
+          "stoploss=>", round(order_result[10].sl, 5), "takeprofit=>", round(order_result[10].tp, 5),
+          "Result=>", order_result[7])
     return order_result
 
 
@@ -97,8 +98,9 @@ def add_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit
     }
     order_result = mt5.order_send(request)
     order_type = {0: 'buy', 1: 'sell'}
-    print("ADD ORDER=>", order_type[order_result[10].type], "price=>", round(order_result[10].price, 5),    # "stoploss=>", round(order_result[10].sl, 5),
-          "takeprofit=>", round(order_result[10].tp, 5), "Result=>", order_result[7])
+    print("ADD ORDER=>", order_type[order_result[10].type], "price=>", round(order_result[10].price, 5),
+          "stoploss=>", round(order_result[10].sl, 5), "takeprofit=>", round(order_result[10].tp, 5),
+          "Result=>", order_result[7])
     return order_result
 
 def get_new_volume(volum):
@@ -144,8 +146,8 @@ def trading_takeprofit(position):
                 "type": position.type,
                 "position": position.ticket,
                 "price_open": position.price_open,
-                "sl": tick1.ask + 0.00025,
-                "tp": tick1.ask - 0.00025,
+                "sl": tick1.ask + 0.0002,
+                "tp": tick1.bid - 0.0002,
                 "magic": position.magic,
                 "comment": "python trading profit",
                 "type_time": mt5.ORDER_TIME_GTC,
@@ -153,7 +155,10 @@ def trading_takeprofit(position):
                 "ENUM_ORDER_STATE": mt5.ORDER_FILLING_RETURN,
             }
             result = mt5.order_send(request)
-            print("Profit")
+            order_type = {0: 'buy', 1: 'sell'}
+            print("Profit=>", order_type[result[10].type], "price=>", round(result[10].price, 5),
+                  "stoploss=>", round(result[10].sl, 5), "takeprofit=>", round(result[10].tp, 5),
+                  "Result=>", result[7])
             return result
 
     elif position.type == 0:    # buy
@@ -165,8 +170,8 @@ def trading_takeprofit(position):
                 "type": position.type,
                 "position": position.ticket,
                 "price_open": position.price_open,
-                "sl": tick1.bid - 0.00025,
-                "tp": tick1.bid + 0.00025,
+                "sl": tick1.bid - 0.0002,
+                "tp": tick1.ask + 0.0002,
                 "magic": position.magic,
                 "comment": "python trading profit",
                 "type_time": mt5.ORDER_TIME_GTC,
@@ -174,7 +179,10 @@ def trading_takeprofit(position):
                 "ENUM_ORDER_STATE": mt5.ORDER_FILLING_RETURN,
             }
             result = mt5.order_send(request)
-            print("Profit")
+            order_type = {0: 'buy', 1: 'sell'}
+            print("Profit=>", order_type[result[10].type], "price=>", round(result[10].price, 5),
+                  "stoploss=>", round(result[10].sl, 5), "takeprofit=>", round(result[10].tp, 5),
+                  "Result=>", result[7])
             return result
 
 
@@ -212,14 +220,14 @@ if initialize:
             rsi = RSI(df, PERIOD)
             if rsi < 30:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
-                             stoploss=tick.bid - atr, takeprofit=tick.bid + atr)
+                             stoploss=tick.bid - atr, takeprofit=tick.ask + atr)
             elif rsi > 70:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
-                             stoploss=tick.ask + atr, takeprofit=tick.ask - atr)
+                             stoploss=tick.ask + atr, takeprofit=tick.bid - atr)
 
         else:
+            position = position[0]
             trading_takeprofit(position=position)
-        #     position = position[0]
         #     if position.type == 1:          # sell
         #         if position.price_open + PIPS <= tick.bid:  # # 50 pip minusga kirsa yana sell ochadi
         #             new_volume = get_new_volume(position.volume)
@@ -231,7 +239,7 @@ if initialize:
         #             add_order(symbol=SYMBOL, volume=new_volume, order_type="buy", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid + atr, stoploss=tick.bid - 20 * atr)
             # else:
             #     trading_takeprofit(position=position)
-        time.sleep(1)
+        time.sleep(0.5)
 else:
     print('No connection')
 
