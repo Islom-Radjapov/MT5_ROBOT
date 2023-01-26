@@ -14,22 +14,16 @@ def get_df(symbol, timeframe, start_pos, num_bars):
     return df
 
 
-def RSI(df, periods, ema = True):
-    """
-    Returns a pd.Series with the relative strength index.
-    """
+def RSI(df, periods, ema=True):
     close_delta = df['close'].diff()
 
-    # Make two series: one for lower closes and one for higher closes
     up = close_delta.clip(lower=0)
     down = -1 * close_delta.clip(upper=0)
 
     if ema == True:
-        # Use exponential moving average
         ma_up = up.ewm(com=periods - 1, adjust=True, min_periods=periods).mean()
         ma_down = down.ewm(com=periods - 1, adjust=True, min_periods=periods).mean()
     else:
-        # Use simple moving average
         ma_up = up.rolling(window=periods, adjust=False).mean()
         ma_down = down.rolling(window=periods, adjust=False).mean()
 
@@ -39,12 +33,8 @@ def RSI(df, periods, ema = True):
 
 
 def ATR(df, period):
-    # calculating the range of each candle
     df['range'] = df['high'] - df['low']
-
-    # calculating the average value of ranges
     df['atr_14'] = df['range'].rolling(period).mean()
-
     return df['atr_14'].values[-1]
 
 
@@ -103,6 +93,7 @@ def add_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit
           "Result=>", order_result[7])
     return order_result
 
+
 def get_new_volume(volum):
     if volum == 0.01:
         return 0.01
@@ -118,15 +109,17 @@ def get_new_volume(volum):
         return 0.8
     elif volum == 0.21:
         return 0.13
-    elif volum == 0.33:
+    elif volum == 0.34:
         return 0.21
-    return None
+    elif volum == 0.55:
+        return 0.33
+
 
 def get_profit(symbol, price):
     if symbol == 1:
-        return price - 0.0015
+        return price - 0.0025
     elif symbol == 0:
-        return price + 0.0015
+        return price + 0.0025
 
 
 def trading_takeprofit(position):
@@ -142,7 +135,7 @@ def trading_takeprofit(position):
                 "position": position.ticket,
                 "price_open": position.price_open,
                 "sl": tick1.ask + 0.0002,
-                "tp": tick1.bid - 0.0002,
+                "tp": tick1.bid - 0.0003,
                 "magic": position.magic,
                 "comment": "python trading profit",
                 "type_time": mt5.ORDER_TIME_GTC,
@@ -166,7 +159,7 @@ def trading_takeprofit(position):
                 "position": position.ticket,
                 "price_open": position.price_open,
                 "sl": tick1.bid - 0.0002,
-                "tp": tick1.ask + 0.0002,
+                "tp": tick1.ask + 0.0003,
                 "magic": position.magic,
                 "comment": "python trading profit",
                 "type_time": mt5.ORDER_TIME_GTC,
@@ -199,7 +192,7 @@ if initialize:
     TIMEFRAME = mt5.TIMEFRAME_M30
     PERIOD = 14  # setting the RSI and ATR Period
     VOLUME = 0.01
-    PIPS = 0.0005
+    PIPS = 0.001
     DEVIATION = 20
     MAGIC = 10
 
@@ -213,26 +206,33 @@ if initialize:
         # order yoq bosa rsi tekshirib tog'ri kesa order ochadi
         if not position:
             rsi = RSI(df, PERIOD)
-            if rsi < 30:
+            if rsi < 25:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
                              stoploss=tick.bid - 10 * atr, takeprofit=tick.ask + atr)
-            elif rsi > 70:
+            elif rsi > 75:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
                              stoploss=tick.ask + 10 * atr, takeprofit=tick.bid - atr)
 
         else:
             position = position[0]
+
             if position.type == 1:          # sell
-                if position.price_open + PIPS <= tick.bid:  # 50 pip minusga kirsa yana sell ochadi
-                    new_volume = get_new_volume(volum=position.volume)
-                    profit = get_profit(symbol=position.type, price=position.price_open)
-                    add_order(symbol=SYMBOL, volume=new_volume, order_type="sell", deviation=DEVIATION, magic=MAGIC, takeprofit=profit, stoploss=tick.ask + 10 * atr)
+                if position.price_open + PIPS <= tick.bid:  # 100 pip minusga kirsa yana sell ochadi
+                    try:
+                        new_volume = get_new_volume(volum=position.volume)
+                        profit = get_profit(symbol=position.type, price=position.price_open)
+                        add_order(symbol=SYMBOL, volume=new_volume, order_type="sell", deviation=DEVIATION, magic=MAGIC, takeprofit=profit, stoploss=tick.ask + 10 * atr)
+                    except Exception as e:
+                        print("Error=>", e)
 
             elif position.type == 0:        # buy
-                if position.price_open - PIPS >= tick.ask:  # 50 pip minusga kirsa yana buy ochadi
-                    new_volume = get_new_volume(position.volume)
-                    profit = get_profit(symbol=position.type, price=position.price_open)
-                    add_order(symbol=SYMBOL, volume=new_volume, order_type="buy", deviation=DEVIATION, magic=MAGIC, takeprofit=profit, stoploss=tick.bid - 10 * atr)
+                if position.price_open - PIPS >= tick.ask:  # 100 pip minusga kirsa yana buy ochadi
+                    try:
+                        new_volume = get_new_volume(position.volume)
+                        profit = get_profit(symbol=position.type, price=position.price_open)
+                        add_order(symbol=SYMBOL, volume=new_volume, order_type="buy", deviation=DEVIATION, magic=MAGIC, takeprofit=profit, stoploss=tick.bid - 10 * atr)
+                    except Exception as e:
+                        print("Error=>", e)
             else:
                 trading_takeprofit(position=position)
         time.sleep(0.5)
