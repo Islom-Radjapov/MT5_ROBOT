@@ -105,33 +105,28 @@ def add_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit
 
 def get_new_volume(volum):
     if volum == 0.01:
-        return 0.02
+        return 0.01
     elif volum == 0.02:
-        return 0.03
+        return 0.01
     elif volum == 0.03:
-        return 0.05
+        return 0.02
     elif volum == 0.05:
-        return 0.08
+        return 0.03
     elif volum == 0.08:
-        return 0.13
+        return 0.5
     elif volum == 0.13:
-        return 0.21
+        return 0.8
     elif volum == 0.21:
-        return 0.33
+        return 0.13
     elif volum == 0.33:
-        return 0.54
-    elif volum == 0.54:
-        return 0.87
-    elif volum == 0.87:
-        return 1.41
-    elif volum == 1.41:
-        return 2.28
-    elif volum == 2.28:
-        return 3.68
-    elif volum == 3.68:
-        return 5.96
-    elif volum == 5.96:
-        return 9.64
+        return 0.21
+    return None
+
+def get_profit(symbol, price):
+    if symbol == 1:
+        return price - 0.0015
+    elif symbol == 0:
+        return price + 0.0015
 
 
 def trading_takeprofit(position):
@@ -201,10 +196,10 @@ if initialize:
 
 
     SYMBOL = "EURUSD_i"
-    TIMEFRAME = mt5.TIMEFRAME_M15
+    TIMEFRAME = mt5.TIMEFRAME_M30
     PERIOD = 14  # setting the RSI and ATR Period
     VOLUME = 0.01
-    PIPS = 0.0003
+    PIPS = 0.0005
     DEVIATION = 20
     MAGIC = 10
 
@@ -213,32 +208,33 @@ if initialize:
         position = positions_get(SYMBOL)
         tick = mt5.symbol_info_tick(SYMBOL)
         df = get_df(SYMBOL, TIMEFRAME, 0, 24)
-        atr = ATR(df, PERIOD)
+        atr = 2 * ATR(df, PERIOD)
 
         # order yoq bosa rsi tekshirib tog'ri kesa order ochadi
         if not position:
             rsi = RSI(df, PERIOD)
             if rsi < 30:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
-                             stoploss=tick.bid - atr, takeprofit=tick.ask + atr)
+                             stoploss=tick.bid - 10 * atr, takeprofit=tick.ask + atr)
             elif rsi > 70:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
-                             stoploss=tick.ask + atr, takeprofit=tick.bid - atr)
+                             stoploss=tick.ask + 10 * atr, takeprofit=tick.bid - atr)
 
         else:
             position = position[0]
-            trading_takeprofit(position=position)
-        #     if position.type == 1:          # sell
-        #         if position.price_open + PIPS <= tick.bid:  # # 50 pip minusga kirsa yana sell ochadi
-        #             new_volume = get_new_volume(position.volume)
-        #             add_order(symbol=SYMBOL, volume=new_volume, order_type="sell", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid - atr, stoploss=tick.bid + 20 * atr)
-        #
-        #     elif position.type == 0:        # buy
-        #         if position.price_open - PIPS >= tick.ask:  # 50 pip minusga kirsa yana buy ochadi
-        #             new_volume = get_new_volume(position.volume)
-        #             add_order(symbol=SYMBOL, volume=new_volume, order_type="buy", deviation=DEVIATION, magic=MAGIC, takeprofit=tick.bid + atr, stoploss=tick.bid - 20 * atr)
-            # else:
-            #     trading_takeprofit(position=position)
+            if position.type == 1:          # sell
+                if position.price_open + PIPS <= tick.bid:  # 50 pip minusga kirsa yana sell ochadi
+                    new_volume = get_new_volume(volum=position.volume)
+                    profit = get_profit(symbol=position.type, price=position.price_open)
+                    add_order(symbol=SYMBOL, volume=new_volume, order_type="sell", deviation=DEVIATION, magic=MAGIC, takeprofit=profit, stoploss=tick.ask + 10 * atr)
+
+            elif position.type == 0:        # buy
+                if position.price_open - PIPS >= tick.ask:  # 50 pip minusga kirsa yana buy ochadi
+                    new_volume = get_new_volume(position.volume)
+                    profit = get_profit(symbol=position.type, price=position.price_open)
+                    add_order(symbol=SYMBOL, volume=new_volume, order_type="buy", deviation=DEVIATION, magic=MAGIC, takeprofit=profit, stoploss=tick.bid - 10 * atr)
+            else:
+                trading_takeprofit(position=position)
         time.sleep(0.5)
 else:
     print('No connection')
