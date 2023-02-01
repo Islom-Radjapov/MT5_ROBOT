@@ -112,14 +112,22 @@ def get_new_volume(volum):
     elif volum == 0.34:
         return 0.21
     elif volum == 0.55:
-        return 0.33
+        return 0.34
+    elif volum == 0.89:
+        return 0.55
+    elif volum == 1.44:
+        return 0.89
+    elif volum == 2.33:
+        return 1.44
+    elif volum == 3.77:
+        return 2.33
 
 
 def get_profit(symbol, price):
     if symbol == 1:
-        return price - 0.0025
+        return price - 0.0015
     elif symbol == 0:
-        return price + 0.0025
+        return price + 0.0015
 
 
 def trading_takeprofit(position):
@@ -177,8 +185,8 @@ def trading_takeprofit(position):
 initialize = mt5.initialize()
 
 if initialize:
-    login = 51466985
-    password = 'N4ry9n7vi'
+    login = 51490382
+    password = 'd2L1n5g3b'
     server = 'Alpari-MT5-Demo'
     mt5.login(login=login, password=password, server=server)
 
@@ -189,10 +197,10 @@ if initialize:
 
 
     SYMBOL = "EURUSD_i"
-    TIMEFRAME = mt5.TIMEFRAME_M30
+    TIMEFRAME = mt5.TIMEFRAME_M5
     PERIOD = 14  # setting the RSI and ATR Period
     VOLUME = 0.01
-    PIPS = 0.001
+    PIPS = 0.005
     DEVIATION = 20
     MAGIC = 10
 
@@ -206,10 +214,10 @@ if initialize:
         # order yoq bosa rsi tekshirib tog'ri kesa order ochadi
         if not position:
             rsi = RSI(df, PERIOD)
-            if rsi < 25:
+            if rsi < 30:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
                              stoploss=tick.bid - 10 * atr, takeprofit=tick.ask + atr)
-            elif rsi > 75:
+            elif rsi > 70:
                 market_order(symbol=SYMBOL, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
                              stoploss=tick.ask + 10 * atr, takeprofit=tick.bid - atr)
 
