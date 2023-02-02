@@ -28,64 +28,64 @@ def get_df(symbol, timeframe, start_pos, num_bars):
 
 
 def get_signal(symbol, df):
-    symbol_dict = {'EURUSD_i': 0.0015, 'XAUUSD_i': 1.5}
+    symbol_dict = {'EURUSD_i': 0.0015, 'XAUUSD_i': 1.5, 'GBPUSD_i': 0.0015, 'NZDUSD_i': 0.0015, 'USDCAD_i': 0.0015, 'USDCHF_i': 0.0015}
 
-    if df.iloc[-1].candle_type == 'bullish':
-        if df.iloc[-2].candle_type == 'bearish':
-            if df.iloc[-2].open - symbol_dict[symbol] >= df.iloc[-2].close:
+    if df.iloc[-2].candle_type == 'bullish':
+        if df.iloc[-3].candle_type == 'bearish':
+            if df.iloc[-3].open - symbol_dict[symbol] >= df.iloc[-2].close:
                 return 'buy'
-            elif df.iloc[-3].candle_type == 'bearish':
-                if df.iloc[-3].open - symbol_dict[symbol] >= df.iloc[-2].close:
+            elif df.iloc[-4].candle_type == 'bearish':
+                if df.iloc[-4].open - symbol_dict[symbol] >= df.iloc[-2].close:
                     return 'buy'
-                elif df.iloc[-4].candle_type == 'bearish':
-                    if df.iloc[-4].open - symbol_dict[symbol] >= df.iloc[-2].close:
+                elif df.iloc[-5].candle_type == 'bearish':
+                    if df.iloc[-5].open - symbol_dict[symbol] >= df.iloc[-2].close:
                         return 'buy'
-                    elif df.iloc[-5].candle_type == 'bearish':
-                        if df.iloc[-5].open - symbol_dict[symbol] >= df.iloc[-2].close:
+                    elif df.iloc[-6].candle_type == 'bearish':
+                        if df.iloc[-6].open - symbol_dict[symbol] >= df.iloc[-2].close:
                             return 'buy'
-                        elif df.iloc[-6].candle_type == 'bearish':
-                            if df.iloc[-6].open - symbol_dict[symbol] >= df.iloc[-2].close:
+                        elif df.iloc[-7].candle_type == 'bearish':
+                            if df.iloc[-7].open - symbol_dict[symbol] >= df.iloc[-2].close:
                                 return 'buy'
-                            elif df.iloc[-7].candle_type == 'bearish':
-                                if df.iloc[-7].open - symbol_dict[symbol] >= df.iloc[-2].close:
+                            elif df.iloc[-8].candle_type == 'bearish':
+                                if df.iloc[-8].open - symbol_dict[symbol] >= df.iloc[-2].close:
                                     return 'buy'
-                                elif df.iloc[-8].candle_type == 'bearish':
-                                    if df.iloc[-8].open - symbol_dict[symbol] >= df.iloc[-2].close:
+                                elif df.iloc[-9].candle_type == 'bearish':
+                                    if df.iloc[-9].open - symbol_dict[symbol] >= df.iloc[-2].close:
                                         return 'buy'
-                                    elif df.iloc[-9].candle_type == 'bearish':
-                                        if df.iloc[-9].open - symbol_dict[symbol] >= df.iloc[-2].close:
+                                    elif df.iloc[-10].candle_type == 'bearish':
+                                        if df.iloc[-10].open - symbol_dict[symbol] >= df.iloc[-2].close:
                                             return 'buy'
-                                        elif df.iloc[-10].candle_type == 'bearish':
-                                            if df.iloc[-10].open - symbol_dict[symbol] >= df.iloc[-2].close:
+                                        elif df.iloc[-11].candle_type == 'bearish':
+                                            if df.iloc[-11].open - symbol_dict[symbol] >= df.iloc[-2].close:
                                                 return 'buy'
 
-    elif df.iloc[-1].candle_type == 'bearish':
-        if df.iloc[-2].candle_type == 'bullish':
-            if df.iloc[-2].open + symbol_dict[symbol] >= df.iloc[-2].close:
+    elif df.iloc[-2].candle_type == 'bearish':
+        if df.iloc[-3].candle_type == 'bullish':
+            if df.iloc[-3].open + symbol_dict[symbol] >= df.iloc[-2].close:
                 return 'sell'
-            elif df.iloc[-3].candle_type == 'bullish':
-                if df.iloc[-3].open + symbol_dict[symbol] >= df.iloc[-2].close:
+            elif df.iloc[-4].candle_type == 'bullish':
+                if df.iloc[-4].open + symbol_dict[symbol] >= df.iloc[-2].close:
                     return 'sell'
-                elif df.iloc[-4].candle_type == 'bullish':
-                    if df.iloc[-4].open + symbol_dict[symbol] >= df.iloc[-2].close:
+                elif df.iloc[-5].candle_type == 'bullish':
+                    if df.iloc[-5].open + symbol_dict[symbol] >= df.iloc[-2].close:
                         return 'sell'
-                    elif df.iloc[-5].candle_type == 'bullish':
-                        if df.iloc[-5].open + symbol_dict[symbol] >= df.iloc[-2].close:
+                    elif df.iloc[-6].candle_type == 'bullish':
+                        if df.iloc[-6].open + symbol_dict[symbol] >= df.iloc[-2].close:
                             return 'sell'
-                        elif df.iloc[-6].candle_type == 'bullish':
-                            if df.iloc[-6].open + symbol_dict[symbol] >= df.iloc[-2].close:
+                        elif df.iloc[-7].candle_type == 'bullish':
+                            if df.iloc[-7].open + symbol_dict[symbol] >= df.iloc[-2].close:
                                 return 'sell'
-                            elif df.iloc[-7].candle_type == 'bullish':
-                                if df.iloc[-7].open + symbol_dict[symbol] >= df.iloc[-2].close:
+                            elif df.iloc[-8].candle_type == 'bullish':
+                                if df.iloc[-8].open + symbol_dict[symbol] >= df.iloc[-2].close:
                                     return 'sell'
-                                elif df.iloc[-8].candle_type == 'bullish':
-                                    if df.iloc[-8].open + symbol_dict[symbol] >= df.iloc[-2].close:
+                                elif df.iloc[-9].candle_type == 'bullish':
+                                    if df.iloc[-9].open + symbol_dict[symbol] >= df.iloc[-2].close:
                                         return 'sell'
-                                    elif df.iloc[-9].candle_type == 'bullish':
-                                        if df.iloc[-9].open + symbol_dict[symbol] >= df.iloc[-2].close:
+                                    elif df.iloc[-10].candle_type == 'bullish':
+                                        if df.iloc[-10].open + symbol_dict[symbol] >= df.iloc[-2].close:
                                             return 'sell'
-                                        elif df.iloc[-10].candle_type == 'bullish':
-                                            if df.iloc[-10].open + symbol_dict[symbol] >= df.iloc[-2].close:
+                                        elif df.iloc[-11].candle_type == 'bullish':
+                                            if df.iloc[-11].open + symbol_dict[symbol] >= df.iloc[-2].close:
                                                 return 'sell'
 
 
@@ -130,9 +130,9 @@ if initialize:
     print('Server=>', mt5.account_info().server)
     print('Balance=>', mt5.account_info().balance)
 
-    SYMBOLS = ['EURUSD_i', 'XAUUSD_i']
-    LOSS = {'EURUSD_i': 0.00033, 'XAUUSD_i': 0.33}
-    PROFIT = {'EURUSD_i': 0.00075, 'XAUUSD_i': 0.75}
+    SYMBOLS = ['EURUSD_i',          'XAUUSD_i',        'GBPUSD_i',          'NZDUSD_i',          'USDCAD_i',          'USDCHF_i']
+    LOSS =    {'EURUSD_i': 0.00033, 'XAUUSD_i': 0.33,  'GBPUSD_i': 0.00033, 'NZDUSD_i': 0.00033, 'USDCAD_i': 0.00033, 'USDCHF_i': 0.00033}
+    PROFIT =  {'EURUSD_i': 0.00075, 'XAUUSD_i': 0.75,  'GBPUSD_i': 0.00075, 'NZDUSD_i': 0.00075, 'USDCAD_i': 0.00075, 'USDCHF_i': 0.00075}
     TIMEFRAME = mt5.TIMEFRAME_M15
     VOLUME = 0.01
     DEVIATION = 20
@@ -142,20 +142,20 @@ if initialize:
 
         for symbol in SYMBOLS:
             position = positions_get(symbol)
-            tick = mt5.symbol_info_tick(symbol)
-            df = get_df(symbol, TIMEFRAME, 0, 10)
+            df = get_df(symbol, TIMEFRAME, 0, 11)
 
             signal = get_signal(symbol=symbol, df=df)
 
             if not position:
                 if signal:
+                    tick = mt5.symbol_info_tick(symbol)
                     if signal == 'buy':
                         market_order(symbol=symbol, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
                                      stoploss=tick.bid - LOSS[symbol], takeprofit=tick.ask + PROFIT[symbol])
 
                     elif signal == 'sell':
                         market_order(symbol=symbol, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
-                                     stoploss=tick.ask + LOSS[symbol], takeprofit=tick.bid + PROFIT[symbol])
+                                     stoploss=tick.ask + LOSS[symbol], takeprofit=tick.bid - PROFIT[symbol])
 
 
         time.sleep(1)
