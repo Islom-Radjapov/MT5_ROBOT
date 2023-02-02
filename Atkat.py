@@ -172,7 +172,7 @@ if initialize:
         for symbol in SYMBOLS:
             position = positions_get(symbol)
             df = get_df(symbol, TIMEFRAME, 0, 11)
-            signal = get_signal(df=df)
+            signal = get_signal(data=df)
 
             if not position:
                 if signal:
