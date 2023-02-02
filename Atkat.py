@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import time
+import sqlite3
 
 
 def positions_get(symbol):
@@ -117,11 +118,40 @@ def market_order(symbol, volume, order_type, deviation, magic, stoploss, takepro
     return order_result
 
 
+def create_table(symbol):
+    connection = sqlite3.connect('database.db')
+    cursor = connection.cursor()
+    cursor.execute(f"""CREATE TABLE IF NOT EXISTS {symbol} (
+                        "id"    INTEGER NOT NULL UNIQUE,
+                        "datetime"	TEXT NOT NULL,
+                        PRIMARY KEY("id" AUTOINCREMENT)
+                        );""")
+    connection.commit()
+    connection.close()
+
+
+def add_market(symbol, datetime):
+    connection = sqlite3.connect('database.db')
+    cursor = connection.cursor()
+    cursor.execute(f"INSERT INTO {symbol} (datetime) VALUES ('{datetime}')")
+    connection.commit()
+    connection.close()
+
+
+def get_order(symbol):
+    connection = sqlite3.connect('database.db')
+    cursor = connection.cursor()
+    open_time = cursor.execute(f"SELECT datetime FROM {symbol} ORDER BY id DESC ").fetchone()[0]
+    connection.commit()
+    connection.close()
+    return pd.to_datetime(open_time)
+
+
 initialize = mt5.initialize()
 
 if initialize:
-    login = 51490382
-    password = 'd2L1n5g3b'
+    login = 51466985
+    password = 'N4ry9n7vi'
     server = 'Alpari-MT5-Demo'
     mt5.login(login=login, password=password, server=server)
 
@@ -149,13 +179,38 @@ if initialize:
             if not position:
                 if signal:
                     tick = mt5.symbol_info_tick(symbol)
+                    try:
+                        last_order = get_order(symbol)
+                    except:
+                        last_order = None
+
                     if signal == 'buy':
-                        market_order(symbol=symbol, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
-                                     stoploss=tick.bid - LOSS[symbol], takeprofit=tick.ask + PROFIT[symbol])
+                        try:
+                            if get_order(symbol) + pd.Timedelta(minutes=15) < datetime.now():
+                                market_order(symbol=symbol, volume=VOLUME, order_type="buy", deviation=DEVIATION, magic=MAGIC,
+                                             stoploss=tick.bid - LOSS[symbol], takeprofit=tick.ask + PROFIT[symbol])
+                                create_table(symbol)
+                                add_market(symbol, datetime.now())
+                        except:
+                            market_order(symbol=symbol, volume=VOLUME, order_type="buy", deviation=DEVIATION,
+                                         magic=MAGIC,
+                                         stoploss=tick.bid - LOSS[symbol], takeprofit=tick.ask + PROFIT[symbol])
+                            create_table(symbol)
+                            add_market(symbol, datetime.now())
 
                     elif signal == 'sell':
-                        market_order(symbol=symbol, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
-                                     stoploss=tick.ask + LOSS[symbol], takeprofit=tick.bid - PROFIT[symbol])
+                        try:
+                            if last_order + pd.Timedelta(minutes=15) < datetime.now():
+                                market_order(symbol=symbol, volume=VOLUME, order_type="sell", deviation=DEVIATION, magic=MAGIC,
+                                             stoploss=tick.ask + LOSS[symbol], takeprofit=tick.bid - PROFIT[symbol])
+                                create_table(symbol)
+                                add_market(symbol, datetime.now())
+                        except:
+                            market_order(symbol=symbol, volume=VOLUME, order_type="sell", deviation=DEVIATION,
+                                         magic=MAGIC,
+                                         stoploss=tick.ask + LOSS[symbol], takeprofit=tick.bid - PROFIT[symbol])
+                            create_table(symbol)
+                            add_market(symbol, datetime.now())
 
 
         time.sleep(1)
