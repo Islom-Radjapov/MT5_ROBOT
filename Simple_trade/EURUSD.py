@@ -85,8 +85,8 @@ def get_volume(volum):
 initialize = mt5.initialize()
 
 if initialize:
-    login = 51500183
-    password = 'mkqfrkw6'
+    login = 51502266
+    password = 'ylmgh3sd'
     server = 'Alpari-MT5-Demo'
     mt5.login(login=login, password=password, server=server)
 
@@ -106,23 +106,16 @@ if initialize:
         # 2ta order bosa va qaysi birini profiti 0.2$ dan baland bosa yopadi
         if len(mt5.positions_get(symbol=SYMBOL)) == 2:
             Close_profit()
-            # time.sleep(1)
+
 
         # order 1ta bosa shu orderga qarshi order ochadi
-        if len(mt5.positions_get(symbol=SYMBOL)) < 2:
-            positions = mt5.positions_get(symbol=SYMBOL)
-            b = 0
-            s = 0
-            for position in positions:
-                if position.type == 0:
-                    b += 1
-                elif position.type == 1:
-                    s += 1
-            if b == len(positions):
+        positions = mt5.positions_get(symbol=SYMBOL)
+        if len(positions) == 1:
+            if positions[0].type == 0:
                 mt5.Sell(symbol=SYMBOL, volume=VOLUME)
-            elif s == len(positions):
+            else:
                 mt5.Buy(symbol=SYMBOL, volume=VOLUME)
-            # time.sleep(1)
+
 
         # qaysi order minusga kirsa order qoshadi
         if len(mt5.positions_get(symbol=SYMBOL)) == 2:
@@ -164,7 +157,7 @@ if initialize:
                         mt5.Buy(symbol=SYMBOL, volume=77.76)
                     elif pos.type == 1:
                         mt5.Sell(symbol=SYMBOL, volume=77.76)
-        # time.sleep(1)
+
 
         # orderlar soni 2tadan kop bosa va profit kutganimzde bosa shu yonalishdagi barchasini yopadi
         if len(mt5.positions_get(symbol=SYMBOL)) > 2:
@@ -179,9 +172,17 @@ if initialize:
             if len(buy_list) < len(sel_list):
                 if (sel_list[-1].volume * 2 * 10) <= sel_list[-1].profit:
                     Close_sell(symbol=SYMBOL)
+                else:
+                    if len(buy_list) == 1 and buy_list[0].profit >= 0.2:
+                        Close_buy()
             elif len(buy_list) > len(sel_list):
                 if (buy_list[-1].volume * 2 * 10) <= buy_list[-1].profit:
                     Close_buy(symbol=SYMBOL)
+                else:
+                    if len(sel_list) == 1 and sel_list[0].profit >= 0.2:
+                        Close_sell()
+
+
 
         time.sleep(1)
 else:
