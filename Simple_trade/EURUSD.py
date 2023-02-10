@@ -1,12 +1,11 @@
 import MetaTrader5 as mt5
-import pandas as pd
 import time
+
 
 
 def Close_profit():
     order_type = {0: 'buy', 1: 'sell'}
-    positions = mt5.positions_get(symbol=SYMBOL)
-    for position in positions:
+    for position in mt5.positions_get(symbol=SYMBOL):
         if position.profit >= 0.20:
             mt5.Close(position.symbol, ticket=position.ticket)
             print('Closed=>', order_type[position.type], 'Profit=>', position.profit)
@@ -14,12 +13,10 @@ def Close_profit():
 
 def Close_buy(symbol, comment=None):
     positions = mt5.positions_get(symbol=symbol)
-    tried = 0
-    done = 0
+    print('Closed all Buy')
     for pos in positions:
         # process only simple buy
         if pos.type == mt5.ORDER_TYPE_BUY:
-            tried += 1
             for tries in range(10):
                 info = mt5.symbol_info_tick(symbol)
                 if info is None:
@@ -29,26 +26,19 @@ def Close_buy(symbol, comment=None):
                 if r is None:
                     return None
                 if r.retcode != mt5.TRADE_RETCODE_REQUOTE and r.retcode != mt5.TRADE_RETCODE_PRICE_OFF:
-                    if r.retcode == mt5.TRADE_RETCODE_DONE:
-                        done += 1
                     break
-    print('Close all Buy')
-    if done > 0:
-        if done == tried:
-            print(True)
-        else:
-            print("Partially")
+            print('Profit=>', pos.profit)
 
 
 
 def Close_sell(symbol, comment=None):
     positions = mt5.positions_get(symbol=symbol)
+    print('Closed all Sell')
     tried = 0
     done = 0
     for pos in positions:
         # process only simple buy, sell
         if pos.type == mt5.ORDER_TYPE_SELL:
-            tried += 1
             for tries in range(10):
                 info = mt5.symbol_info_tick(symbol)
                 if info is None:
@@ -58,15 +48,8 @@ def Close_sell(symbol, comment=None):
                 if r is None:
                     return None
                 if r.retcode != mt5.TRADE_RETCODE_REQUOTE and r.retcode != mt5.TRADE_RETCODE_PRICE_OFF:
-                    if r.retcode == mt5.TRADE_RETCODE_DONE:
-                        done += 1
                     break
-    print('Close all Sell')
-    if done > 0:
-        if done == tried:
-            print(True)
-        else:
-            print("Partially")
+        print('Profit=>', pos.profit)
 
 
 def get_volume(volum):
@@ -80,6 +63,82 @@ def get_volume(volum):
         return 0.36
     elif volum == 0.01:
         return 0.06
+
+
+def Count_order(positions):
+    num_buy = 0
+    num_sell = 0
+    for pos in positions:
+        if pos.type == 0:
+            num_buy += 1
+        else:
+            num_sell += 1
+    return num_buy, num_sell
+
+
+def Count_position():
+    list_buy = []
+    list_sell = []
+    for pos in mt5.positions_get(symbol=SYMBOL):
+        if pos.type == 0:
+            list_sell.append(pos)
+        else:
+            list_buy.append(pos)
+    return list_buy, list_sell
+
+
+def add_order(positions):
+
+    if len(positions) == 2:
+        for pos in mt5.positions_get(symbol=SYMBOL):
+            if pos.profit < (-1.0):
+                if pos.type == 0:
+                    mt5.Buy(symbol=SYMBOL, volume=0.06)
+                    print('Open=> BUY volume', 0.06)
+                else:
+                    mt5.Sell(symbol=SYMBOL, volume=0.06)
+                    print('Open=> SELL volume', 0.06)
+
+    elif len(positions) == 3:
+        for pos in mt5.positions_get(symbol=SYMBOL):
+            if pos.profit < (-6.0):
+                if pos.type == 0:
+                    mt5.Buy(symbol=SYMBOL, volume=0.36)
+                    print('Open=> BUY volume', 0.36)
+                else:
+                    mt5.Sell(symbol=SYMBOL, volume=0.36)
+                    print('Open=> SELL volume', 0.36)
+
+    elif len(positions) == 4:
+        for pos in mt5.positions_get(symbol=SYMBOL):
+            if pos.profit < (-36.0):
+                if pos.type == 0:
+                    mt5.Buy(symbol=SYMBOL, volume=2.16)
+                    print('Open=> BUY volume', 2.16)
+                else:
+                    mt5.Sell(symbol=SYMBOL, volume=2.16)
+                    print('Open=> SELL volume', 2.16)
+
+    elif len(positions) == 5:
+        for pos in mt5.positions_get(symbol=SYMBOL):
+            if pos.profit < (-216):
+                if pos.type == 0:
+                    mt5.Buy(symbol=SYMBOL, volume=12.96)
+                    print('Open=> BUY volume', 12.96)
+                else:
+                    mt5.Sell(symbol=SYMBOL, volume=12.96)
+                    print('Open=> SELL volume', 12.96)
+
+    elif len(positions) == 6:
+        for pos in mt5.positions_get(symbol=SYMBOL):
+            if pos.profit < (-1296):
+                if pos.type == 0:
+                    mt5.Buy(symbol=SYMBOL, volume=77.76)
+                    print('Open=> BUY volume', 77.76)
+                else:
+                    mt5.Sell(symbol=SYMBOL, volume=77.76)
+                    print('Open=> SELL volume', VOLUME)
+
 
 
 initialize = mt5.initialize()
@@ -98,92 +157,55 @@ if initialize:
     SYMBOL = 'EURUSD'
     VOLUME = 0.01
     time.sleep(5)
-    mt5.Buy(symbol=SYMBOL, volume=VOLUME)
-    mt5.Sell(symbol=SYMBOL, volume=VOLUME)
-    time.sleep(1)
+
 
     while True:
+
+        # qaysi positsiyada order yo bosa shu positsiyada order ochadi
+        buy, sell = Count_order(positions=mt5.positions_get(symbol=SYMBOL))
+        if buy == 0:
+            mt5.Buy(symbol=SYMBOL, volume=VOLUME)
+            print('Open=> BUY volume', VOLUME)
+        if sell == 0:
+            mt5.Sell(symbol=SYMBOL, volume=VOLUME)
+            print('Open=> SELL volume', VOLUME)
+        time.sleep(0.5)
+
         # 2ta order bosa va qaysi birini profiti 0.2$ dan baland bosa yopadi
-        if len(mt5.positions_get(symbol=SYMBOL)) == 2:
+        buy, sell = Count_order(positions=mt5.positions_get(symbol=SYMBOL))
+        if buy == 1 and sell == 1:
             Close_profit()
-
-
-        # order 1ta bosa shu orderga qarshi order ochadi
-        positions = mt5.positions_get(symbol=SYMBOL)
-        if len(positions) == 1:
-            if positions[0].type == 0:
-                mt5.Sell(symbol=SYMBOL, volume=VOLUME)
-            else:
-                mt5.Buy(symbol=SYMBOL, volume=VOLUME)
-
+        time.sleep(0.5)
 
         # qaysi order minusga kirsa order qoshadi
-        if len(mt5.positions_get(symbol=SYMBOL)) == 2:
-            for pos in mt5.positions_get(symbol=SYMBOL):
-                if pos.profit < (-1.0):
-                    if pos.type == 0:
-                        mt5.Buy(symbol=SYMBOL, volume=0.06)
-                    elif pos.type == 1:
-                        mt5.Sell(symbol=SYMBOL, volume=0.06)
-
-        elif len(mt5.positions_get(symbol=SYMBOL)) == 3:
-            for pos in mt5.positions_get(symbol=SYMBOL):
-                if pos.profit < (-6.0):
-                    if pos.type == 0:
-                        mt5.Buy(symbol=SYMBOL, volume=0.36)
-                    elif pos.type == 1:
-                        mt5.Sell(symbol=SYMBOL, volume=0.36)
-
-        elif len(mt5.positions_get(symbol=SYMBOL)) == 4:
-            for pos in mt5.positions_get(symbol=SYMBOL):
-                if pos.profit < (-36.0):
-                    if pos.type == 0:
-                        mt5.Buy(symbol=SYMBOL, volume=2.16)
-                    elif pos.type == 1:
-                        mt5.Sell(symbol=SYMBOL, volume=2.16)
-
-        elif len(mt5.positions_get(symbol=SYMBOL)) == 5:
-            for pos in mt5.positions_get(symbol=SYMBOL):
-                if pos.profit < (-216):
-                    if pos.type == 0:
-                        mt5.Buy(symbol=SYMBOL, volume=12.96)
-                    elif pos.type == 1:
-                        mt5.Sell(symbol=SYMBOL, volume=12.96)
-
-        elif len(mt5.positions_get(symbol=SYMBOL)) == 6:
-            for pos in mt5.positions_get(symbol=SYMBOL):
-                if pos.profit < (-1296):
-                    if pos.type == 0:
-                        mt5.Buy(symbol=SYMBOL, volume=77.76)
-                    elif pos.type == 1:
-                        mt5.Sell(symbol=SYMBOL, volume=77.76)
+        positions = mt5.positions_get(symbol=SYMBOL)
+        if len(positions) >= 2:
+            add_order(positions)
+        time.sleep(0.5)
 
 
-        # orderlar soni 2tadan kop bosa va profit kutganimzde bosa shu yonalishdagi barchasini yopadi
-        if len(mt5.positions_get(symbol=SYMBOL)) > 2:
-            buy_list = []
-            sel_list = []
-            for position in mt5.positions_get(symbol=SYMBOL):
-                if position.type == 0:
-                    buy_list.append(position)
-                elif position.type == 1:
-                    sel_list.append(position)
 
-            if len(buy_list) < len(sel_list):
-                if (sel_list[-1].volume * 2 * 10) <= sel_list[-1].profit:
-                    Close_sell(symbol=SYMBOL)
-                else:
-                    if len(buy_list) == 1 and buy_list[0].profit >= 0.2:
-                        Close_buy()
-            elif len(buy_list) > len(sel_list):
+        """" orderlar soni 3tadan kop bosa va profit kutganimzde bosa shu yonalishdagi barchasini yopadi
+                                            yoki qaysi positsiya 1ta bosa va profit 0.2$ balan bosa yopadi  """
+        if len(mt5.positions_get(symbol=SYMBOL)) >= 3:
+            buy_list, sell_list = Count_position()
+
+            if len(buy_list) > len(sell_list):
                 if (buy_list[-1].volume * 2 * 10) <= buy_list[-1].profit:
                     Close_buy(symbol=SYMBOL)
                 else:
-                    if len(sel_list) == 1 and sel_list[0].profit >= 0.2:
-                        Close_sell()
+                    if len(sell_list) == 1 and sell_list[0].profit >= 0.2:
+                        mt5.Close(symbol=SYMBOL, ticket=sell_list[0].ticket)
+                        print('Closed=> SEL profit=>', sell_list[0].profit)
 
+            elif len(buy_list) < len(sell_list):
+                if (sell_list[-1].volume * 2 * 10) <= sell_list[-1].profit:
+                    Close_sell(symbol=SYMBOL)
+                else:
+                    if len(buy_list) == 1 and buy_list[0].profit >= 0.2:
+                        mt5.Close(symbol=SYMBOL, ticket=buy_list[0].ticket)
+                        print('Closed=> BUY profit=>', buy_list[0].profit)
+        time.sleep(0.5)
 
-
-        time.sleep(1)
 else:
     print('No connection')
