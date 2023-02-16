@@ -1,14 +1,13 @@
 import MetaTrader5 as mt5
 import time
-
+order_type = {0: 'BUY', 1: 'SELL'}
 
 
 def Close_profit():
-    order_type = {0: 'BUY', 1: 'SELL'}
     for position in mt5.positions_get(symbol=SYMBOL):
         if position.profit >= 0.20:
             mt5.Close(position.symbol, ticket=position.ticket)
-            time.sleep(0.00333)
+            # time.sleep(0.00333)
             print(order_type[position.type], 'Profit=>', position.profit)
 
 
@@ -28,7 +27,6 @@ def Close_buy(symbol, comment=None):
                 if r.retcode != mt5.TRADE_RETCODE_REQUOTE and r.retcode != mt5.TRADE_RETCODE_PRICE_OFF:
                     break
             print('BUY Profit=>', pos.profit)
-    time.sleep(0.00333)
 
 
 
@@ -47,7 +45,6 @@ def Close_sell(symbol, comment=None):
                 if r.retcode != mt5.TRADE_RETCODE_REQUOTE and r.retcode != mt5.TRADE_RETCODE_PRICE_OFF:
                     break
         print('SELL Profit=>', pos.profit)
-    time.sleep(0.00333)
 
 
 
@@ -79,29 +76,24 @@ def add_order_buy(buy_list):
     lengh = len(buy_list)
     if lengh == 1:
         if buy_list[-1].profit <= -1:
-            mt5.Buy(symbol=SYMBOL, volume=0.06)
-            time.sleep(0.00333)
-            print('Open=> BUY volume', 0.06)
+            BUY1 = mt5.Buy(symbol=SYMBOL, volume=0.06)
+            print(f'Open=> {order_type[BUY1[-1].type]} volume', BUY1[-1].volume)
     elif lengh == 2:
         if buy_list[-1].profit <= -6:
-            mt5.Buy(symbol=SYMBOL, volume=0.36)
-            time.sleep(0.00333)
-            print('Open=> BUY volume', 0.36)
+            BUY1 = mt5.Buy(symbol=SYMBOL, volume=0.36)
+            print(f'Open=> {order_type[BUY1[-1].type]} volume', BUY1[-1].volume)
     elif lengh == 3:
         if buy_list[-1].profit <= -36:
-            mt5.Buy(symbol=SYMBOL, volume=2.16)
-            time.sleep(0.00333)
-            print('Open=> BUY volume', 2.16)
+            BUY1 = mt5.Buy(symbol=SYMBOL, volume=2.16)
+            print(f'Open=> {order_type[BUY1[-1].type]} volume', BUY1[-1].volume)
     elif lengh == 4:
         if buy_list[-1].profit <= -216:
-            mt5.Buy(symbol=SYMBOL, volume=12.96)
-            time.sleep(0.00333)
-            print('Open=> BUY volume', 12.96)
+            BUY1 = mt5.Buy(symbol=SYMBOL, volume=12.96)
+            print(f'Open=> {order_type[BUY1[-1].type]} volume', BUY1[-1].volume)
     elif lengh == 5:
         if buy_list[-1].profit <= -1296:
-            mt5.Buy(symbol=SYMBOL, volume=77.76)
-            time.sleep(0.00333)
-            print('Open=> BUY volume', 77.76)
+            BUY1 = mt5.Buy(symbol=SYMBOL, volume=77.76)
+            print(f'Open=> {order_type[BUY1[-1].type]} volume', BUY1[-1].volume)
 
 
 
@@ -109,29 +101,24 @@ def add_order_sell(sell_list):
     lengh = len(sell_list)
     if lengh == 1:
         if sell_list[-1].profit <= -1:
-            mt5.Sell(symbol=SYMBOL, volume=0.06)
-            time.sleep(0.00333)
-            print('Open=> SELL volume', 0.06)
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.06)
+            print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
     elif lengh == 2:
         if sell_list[-1].profit <= -6:
-            mt5.Sell(symbol=SYMBOL, volume=0.36)
-            time.sleep(0.00333)
-            print('Open=> SELL volume', 0.36)
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.36)
+            print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
     elif lengh == 3:
         if sell_list[-1].profit <= -36:
-            mt5.Sell(symbol=SYMBOL, volume=2.16)
-            time.sleep(0.00333)
-            print('Open=> SELL volume', 2.16)
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=2.16)
+            print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
     elif lengh == 4:
         if sell_list[-1].profit <= -216:
-            mt5.Sell(symbol=SYMBOL, volume=12.96)
-            time.sleep(0.00333)
-            print('Open=> SELL volume', 12.96)
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=12.96)
+            print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
     elif lengh == 5:
         if sell_list[-1].profit <= -1296:
-            mt5.Sell(symbol=SYMBOL, volume=77.76)
-            time.sleep(0.00333)
-            print('Open=> SELL volume', 77.76)
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=77.76)
+            print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
 
 
 
@@ -139,8 +126,8 @@ def add_order_sell(sell_list):
 initialize = mt5.initialize()
 
 if initialize:
-    login = 51508814
-    password = '1dnxwlpf'
+    login = 51513413
+    password = 's8ramreh'
     server = 'Alpari-MT5-Demo'
     # investor parol: 'anznie3n'
     mt5.login(login=login, password=password, server=server)
@@ -152,21 +139,18 @@ if initialize:
 
     SYMBOL = 'EURUSD'
     VOLUME = 0.01
-    time.sleep(5)
 
-
+    order_type = {0: 'BUY', 1: 'SELL'}
     while True:
 
         # qaysi positsiyada order yo bosa shu positsiyada order ochadi
         buy, sell = Count_order(positions=mt5.positions_get(symbol=SYMBOL))
         if buy == 0:
-            mt5.Buy(symbol=SYMBOL, volume=VOLUME)
-            time.sleep(0.00333)
-            print('Open=> BUY volume', VOLUME)
+            BUY = mt5.Buy(symbol=SYMBOL, volume=VOLUME)
+            print(f'Open=> {order_type[BUY[-1].type]} volume', BUY[-1].volume)
         if sell == 0:
-            mt5.Sell(symbol=SYMBOL, volume=VOLUME)
-            time.sleep(0.00333)
-            print('Open=> SELL volume', VOLUME)
+            SELL = mt5.Sell(symbol=SYMBOL, volume=VOLUME)
+            print(f'Open=> {order_type[SELL[-1].type]} volume', SELL[-1].volume)
 
 
         # qaysi order minusga kirsa shu pozitsiyaga order qoshadi
@@ -184,7 +168,6 @@ if initialize:
         if sell_list:
             if sell_list[-1].volume * 2 * 10 <= sell_list[-1].profit:
                 Close_sell(symbol=SYMBOL)
-
 
 else:
     print('No connection')
