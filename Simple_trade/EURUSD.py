@@ -75,24 +75,24 @@ def Count_position():
 def add_order_buy(buy_list):
     lengh = len(buy_list)
     if lengh == 1:
-        if buy_list[-1].profit <= -1:
-            BUY1 = mt5.Buy(symbol=SYMBOL, volume=0.06)
+        if buy_list[-1].profit <= -3:
+            BUY1 = mt5.Buy(symbol=SYMBOL, volume=0.02)
             print(f'Open=> {order_type[BUY1[-1].type]} volume', BUY1[-1].volume)
     elif lengh == 2:
         if buy_list[-1].profit <= -6:
-            BUY1 = mt5.Buy(symbol=SYMBOL, volume=0.36)
+            BUY1 = mt5.Buy(symbol=SYMBOL, volume=0.03)
             print(f'Open=> {order_type[BUY1[-1].type]} volume', BUY1[-1].volume)
     elif lengh == 3:
-        if buy_list[-1].profit <= -36:
-            BUY1 = mt5.Buy(symbol=SYMBOL, volume=2.16)
+        if buy_list[-1].profit <= -9:
+            BUY1 = mt5.Buy(symbol=SYMBOL, volume=0.09)
             print(f'Open=> {order_type[BUY1[-1].type]} volume', BUY1[-1].volume)
     elif lengh == 4:
-        if buy_list[-1].profit <= -216:
-            BUY1 = mt5.Buy(symbol=SYMBOL, volume=12.96)
+        if buy_list[-1].profit <= -27:
+            BUY1 = mt5.Buy(symbol=SYMBOL, volume=0.23)
             print(f'Open=> {order_type[BUY1[-1].type]} volume', BUY1[-1].volume)
     elif lengh == 5:
-        if buy_list[-1].profit <= -1296:
-            BUY1 = mt5.Buy(symbol=SYMBOL, volume=77.76)
+        if buy_list[-1].profit <= -69:
+            BUY1 = mt5.Buy(symbol=SYMBOL, volume=0.47)
             print(f'Open=> {order_type[BUY1[-1].type]} volume', BUY1[-1].volume)
 
 
@@ -100,24 +100,24 @@ def add_order_buy(buy_list):
 def add_order_sell(sell_list):
     lengh = len(sell_list)
     if lengh == 1:
-        if sell_list[-1].profit <= -1:
-            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.06)
+        if sell_list[-1].profit <= -3:
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.02)
             print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
     elif lengh == 2:
         if sell_list[-1].profit <= -6:
-            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.36)
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.03)
             print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
     elif lengh == 3:
-        if sell_list[-1].profit <= -36:
-            SELL1 = mt5.Sell(symbol=SYMBOL, volume=2.16)
+        if sell_list[-1].profit <= -9:
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.09)
             print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
     elif lengh == 4:
-        if sell_list[-1].profit <= -216:
-            SELL1 = mt5.Sell(symbol=SYMBOL, volume=12.96)
+        if sell_list[-1].profit <= -27:
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.23)
             print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
     elif lengh == 5:
-        if sell_list[-1].profit <= -1296:
-            SELL1 = mt5.Sell(symbol=SYMBOL, volume=77.76)
+        if sell_list[-1].profit <= -69:
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.47)
             print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
 
 
@@ -138,7 +138,6 @@ if initialize:
     print('Balance=>', mt5.account_info().balance)
 
     SYMBOL = 'EURUSD'
-    VOLUME = 0.01
 
     order_type = {0: 'BUY', 1: 'SELL'}
     while True:
@@ -146,10 +145,10 @@ if initialize:
         # qaysi positsiyada order yo bosa shu positsiyada order ochadi
         buy, sell = Count_order(positions=mt5.positions_get(symbol=SYMBOL))
         if buy == 0:
-            BUY = mt5.Buy(symbol=SYMBOL, volume=VOLUME)
+            BUY = mt5.Buy(symbol=SYMBOL, volume=0.01)
             print(f'Open=> {order_type[BUY[-1].type]} volume', BUY[-1].volume)
         if sell == 0:
-            SELL = mt5.Sell(symbol=SYMBOL, volume=VOLUME)
+            SELL = mt5.Sell(symbol=SYMBOL, volume=0.01)
             print(f'Open=> {order_type[SELL[-1].type]} volume', SELL[-1].volume)
 
 
