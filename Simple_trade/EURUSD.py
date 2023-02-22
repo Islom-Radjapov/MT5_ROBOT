@@ -207,11 +207,11 @@ if initialize:
         buy_list, sell_list = Count_position()
         # buy orderla kutganimizde foyda keltirsa barchasini yopadi
         if buy_list:
-            if buy_list[-1].volume * 2 * 100 <= buy_list[-1].profit:
+            if buy_list[-1].volume * 2 * 100 < buy_list[-1].profit:
                 Close_buy(symbol=SYMBOL)
         # sel orderla kutganimizde foyda keltirsa barchasini yopadi
         if sell_list:
-            if sell_list[-1].volume * 2 * 100 <= sell_list[-1].profit:
+            if sell_list[-1].volume * 2 * 100 < sell_list[-1].profit:
                 Close_sell(symbol=SYMBOL)
 
 else:
