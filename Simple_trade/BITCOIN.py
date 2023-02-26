@@ -44,7 +44,7 @@ def Count_order(positions):
     for pos in positions:
         if pos.type == 0:
             num_buy += 1
-        else:
+        elif pos.type == 1:
             num_sell += 1
     return num_buy, num_sell
 
@@ -243,7 +243,7 @@ if initialize:
 
         buy, sell = Count_order(positions=mt5.positions_get(symbol=SYMBOL))
         if buy <= 6 or sell <= 6:
-            profit = float()
+            profit = 0
             for pos in mt5.positions_get(symbol=SYMBOL):
                 profit += pos.profit
             if profit >= 3:
