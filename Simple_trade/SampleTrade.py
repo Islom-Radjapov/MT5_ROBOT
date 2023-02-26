@@ -241,5 +241,18 @@ if initialize:
             if sell_list[-1].volume * 2 * 100 < sell_list[-1].profit:
                 Close_sell(symbol=SYMBOL)
 
+        buy, sell = Count_order(positions=mt5.positions_get(symbol=SYMBOL))
+        if buy <= 6 or sell <= 6:
+            profit = float()
+            for pos in mt5.positions_get(symbol=SYMBOL):
+                profit += pos.profit
+            if profit >= 3:
+                mt5.Close(symbol=SYMBOL)
+                sleep(0.00333)
+            elif profit < -200:
+                mt5.Close(symbol=SYMBOL)
+                sleep(0.00333)
+                print("Stop robot close all positions")
+                break
 else:
     print('No connection')
