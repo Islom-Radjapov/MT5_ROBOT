@@ -247,7 +247,7 @@ if initialize:
                 profit = 0
                 for pos in mt5.positions_get(symbol=SYMBOL):
                     profit += pos.profit
-                if profit >= 3:
+                if profit >= 2:
                     mt5.Close(symbol=SYMBOL)
                     sleep(0.00333)
                 elif profit <= -150:
