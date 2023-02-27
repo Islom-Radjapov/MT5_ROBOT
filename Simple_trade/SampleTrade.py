@@ -10,7 +10,6 @@ def Close_buy(symbol, comment=None):
                 if info is None:
                     return None
                 r = mt5._RawOrder(mt5.ORDER_TYPE_SELL, symbol, pos.volume, info.ask, comment, pos.ticket)
-                # check results
                 if r is None:
                     return None
                 if r.retcode != mt5.TRADE_RETCODE_REQUOTE and r.retcode != mt5.TRADE_RETCODE_PRICE_OFF:
@@ -29,7 +28,6 @@ def Close_sell(symbol, comment=None):
                 if info is None:
                     return None
                 r = mt5._RawOrder(mt5.ORDER_TYPE_BUY, symbol, pos.volume, info.ask, comment, pos.ticket)
-                # check results
                 if r is None:
                     return None
                 if r.retcode != mt5.TRADE_RETCODE_REQUOTE and r.retcode != mt5.TRADE_RETCODE_PRICE_OFF:
@@ -146,7 +144,7 @@ def add_order_sell(sell_list):
             sleep(0.00333)
     elif lengh == 4:
         if sell_list[-1].profit <= -5:
-            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.8)
+            SELL1 = mt5.Sell(symbol=SYMBOL, volume=0.08)
             print(f'Open=> {order_type[SELL1[-1].type]} volume', SELL1[-1].volume)
             sleep(0.00333)
     elif lengh == 5:
@@ -197,16 +195,6 @@ def add_order_sell(sell_list):
 initialize = mt5.initialize()
 
 if initialize:
-    # login = 51513413
-    # password = 's8ramreh'
-    # server = 'Alpari-MT5-Demo'
-    # # investor parol: 'anznie3n'
-    # mt5.login(login=login, password=password, server=server)
-    #
-    # print('Connected to MetaTrader5')
-    # print('Login=>', mt5.account_info().login)
-    # print('Server=>', mt5.account_info().server)
-    # print('Balance=>', mt5.account_info().balance)
 
     SYMBOL = 'EURUSD'
     order_type = {0: 'BUY', 1: 'SELL'}
@@ -242,8 +230,14 @@ if initialize:
                 if sell_list[-1].volume * 2 * 100 < sell_list[-1].profit:
                     Close_sell(symbol=SYMBOL)
 
+
+
             buy, sell = Count_order(positions=mt5.positions_get(symbol=SYMBOL))
-            if buy <= 6 or sell <= 6:
+            """
+                buy yoki sell tarafdagi orderlar soni 5ta yoki 5ta kop bosa barchasini profit 2$ bosa yoki undan kop barcha orderla yopladi.
+                agar barcha orderlar profiti -150$ bosa robot toxtatiladi va barcha order yopladi
+            """
+            if buy <= 5 or sell <= 5:
                 profit = 0
                 for pos in mt5.positions_get(symbol=SYMBOL):
                     profit += pos.profit
@@ -255,6 +249,9 @@ if initialize:
                     sleep(0.00333)
                     print("Stop robot close all positions")
                     break
+
+
+        # sikldan chiqgandan keyn orderla qopketgan bosa barchasini yopadi
         result = mt5.Close(symbol=SYMBOL)
         print("result=>", result)
         print("Stop While and Close all positon")
