@@ -238,13 +238,13 @@ if initialize:
                 agar barcha orderlar profiti -150$ bosa robot toxtatiladi va barcha order yopladi
             """
             if buy <= 5 or sell <= 5:
-                profit = 0
+                Profit = 0
                 for pos in mt5.positions_get(symbol=SYMBOL):
-                    profit += pos.profit
-                if profit >= 2:
+                    Profit += pos.profit
+                if Profit >= 2:
                     mt5.Close(symbol=SYMBOL)
                     sleep(0.00333)
-                elif profit <= -150:
+                elif Profit <= -150:
                     mt5.Close(symbol=SYMBOL)
                     sleep(0.00333)
                     print("Stop robot close all positions")
