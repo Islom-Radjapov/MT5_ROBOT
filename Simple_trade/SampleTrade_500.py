@@ -198,6 +198,7 @@ if initialize:
 
     SYMBOL = 'EURUSD'
     order_type = {0: 'BUY', 1: 'SELL'}
+
     print("START ROBOT")
 
     try:
@@ -236,21 +237,41 @@ if initialize:
             buy, sell = Count_order(positions=mt5.positions_get(symbol=SYMBOL))
 
             # buy yoki sell tarafdagi orderlar soni 6ta yoki 6ta kop bosa barchasini profit 10$ bosa yoki undan kop barcha orderla yopladi.
-            if buy == 6 or sell == 6:
+            if buy == 6:
                 Profit = 0
                 for pos in mt5.positions_get(symbol=SYMBOL):
-                    Profit += pos.profit
+                    if pos.type == 0:
+                        Profit += pos.profit
                 if Profit > 10:
-                    mt5.Close(symbol=SYMBOL)
+                    Close_buy(symbol=SYMBOL)
+                    sleep(0.00333)
+
+            elif sell == 6:
+                Profit = 0
+                for pos in mt5.positions_get(symbol=SYMBOL):
+                    if pos.type == 1:
+                        Profit += pos.profit
+                if Profit > 10:
+                    Close_sell(symbol=SYMBOL)
                     sleep(0.00333)
 
             # buy yoki sell tarafdagi orderlar soni 7ta yoki 7ta kop bosa barchasini profit 2$ bosa yoki undan kop barcha orderla yopladi.
-            elif buy >= 7 or sell >= 7:
+            elif buy >= 7:
                 Profit = 0
                 for pos in mt5.positions_get(symbol=SYMBOL):
-                    Profit += pos.profit
-                if Profit >= 2:
-                    mt5.Close(symbol=SYMBOL)
+                    if pos.type == 0:
+                        Profit += pos.profit
+                if Profit > 2:
+                    Close_buy(symbol=SYMBOL)
+                    sleep(0.00333)
+
+            elif sell >= 7:
+                Profit = 0
+                for pos in mt5.positions_get(symbol=SYMBOL):
+                    if pos.type == 1:
+                        Profit += pos.profit
+                if Profit > 2:
+                    Close_sell(symbol=SYMBOL)
                     sleep(0.00333)
 
     except:
