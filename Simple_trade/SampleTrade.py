@@ -198,7 +198,7 @@ if initialize:
 
     SYMBOL = 'EURUSD'
     order_type = {0: 'BUY', 1: 'SELL'}
-
+    print("START ROBOT")
     try:
         while True:
 
@@ -237,7 +237,7 @@ if initialize:
                 buy yoki sell tarafdagi orderlar soni 5ta yoki 5ta kop bosa barchasini profit 2$ bosa yoki undan kop barcha orderla yopladi.
                 agar barcha orderlar profiti -150$ bosa robot toxtatiladi va barcha order yopladi
             """
-            if buy <= 5 or sell <= 5:
+            if buy >= 5 or sell >= 5:
                 Profit = 0
                 for pos in mt5.positions_get(symbol=SYMBOL):
                     Profit += pos.profit

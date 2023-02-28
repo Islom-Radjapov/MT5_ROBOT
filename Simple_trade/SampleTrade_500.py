@@ -198,6 +198,7 @@ if initialize:
 
     SYMBOL = 'EURUSD'
     order_type = {0: 'BUY', 1: 'SELL'}
+    print("START ROBOT")
 
     try:
         while True:
