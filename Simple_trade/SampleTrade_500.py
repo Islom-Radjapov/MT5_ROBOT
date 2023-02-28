@@ -244,7 +244,7 @@ if initialize:
                     sleep(0.00333)
 
             # buy yoki sell tarafdagi orderlar soni 7ta yoki 7ta kop bosa barchasini profit 2$ bosa yoki undan kop barcha orderla yopladi.
-            elif buy <= 7 or sell <= 7:
+            elif buy >= 7 or sell >= 7:
                 Profit = 0
                 for pos in mt5.positions_get(symbol=SYMBOL):
                     Profit += pos.profit
