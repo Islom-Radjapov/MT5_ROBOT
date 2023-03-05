@@ -1,7 +1,232 @@
-void ag(){
-    OrderSelect()
+//+------------------------------------------------------------------+
+//|                                                 Sample_Trade.mq4 |
+//|                                                   Islom Radjapov |
+//|                                       https://t.me/IslomRadjapov |
+//+------------------------------------------------------------------+
+#property copyright "Islom Radjapov"
+#property link      "https://t.me/IslomRadjapov"
+#property version   "1.00"
+#property strict
+
+input string Password;
+input double TakeProfit6 = 10;
+input double TakeProfit7 = 2;
+string SYMBOL = "EURUSD";
+
+
+
+int Count_buy_orders() {
+   int num_buy = 0;
+   for(int x = 0; x <= OrdersTotal(); x++) {
+         if (OrderSelect(x, SELECT_BY_POS) == true) {
+            if (OrderType() == OP_BUY) {
+               num_buy = num_buy  + 1;
+            }
+         }
+   }
+   return num_buy;
 }
 
 
-int
-double
+int Count_sell_orders() {
+   int num_sell = 0;
+   for(int x = 0; x <= OrdersTotal(); x++) {
+         if (OrderSelect(x, SELECT_BY_POS) == true) {
+            if (OrderType() == OP_SELL) {
+               num_sell = num_sell + 1;
+            }
+         }
+   }
+   return num_sell;
+}
+
+
+int last_order_buy() {
+   datetime lastime = NULL;
+   for (int x = OrdersTotal(); x >= 0; x--) {
+      if (OrderSelect(x, SELECT_BY_POS) == true) {
+         if (OrderType() == OP_BUY) {
+            if (lastime == NULL || lastime < OrderOpenTime()) {
+               lastime = OrderOpenTime();
+            }
+         }
+      }
+   }
+   for (int y = OrdersTotal(); y >= 0; y--) {
+      if (OrderSelect(y, SELECT_BY_POS) == true) {
+         if (OrderOpenTime() == lastime) {
+            return OrderTicket();
+         }
+      }
+
+   }
+   return NULL;
+}
+
+
+
+
+int last_order_sell() {
+   datetime lastime = NULL;
+   for (int x = OrdersTotal(); x >= 0; x--) {
+      if (OrderSelect(x, SELECT_BY_POS) == true) {
+         if (OrderType() == OP_SELL) {
+            if (lastime == NULL || lastime < OrderOpenTime()) {
+               lastime = OrderOpenTime();
+            }
+         }
+      }
+   }
+   for (int y = OrdersTotal(); y >= 0; y--) {
+      if (OrderSelect(y, SELECT_BY_POS) == true) {
+         if (OrderOpenTime() == lastime) {
+            return OrderTicket();
+         }
+      }
+
+   }
+   return NULL;
+}
+
+
+void Add_order_buy(){
+   if (OrderSelect(last_order_buy(), SELECT_BY_TICKET) == true) {
+         if (OrderLots() == 0.01) {
+            if (OrderProfit() <= -1) {
+               int BuyOrder = OrderSend(SYMBOL, OP_BUY, 0.02, Ask, 10, 0, 0, NULL, 0, 0, Green);
+            }
+         }
+         else if (OrderLots() == 0.02) {
+            if (OrderProfit() <= -2) {
+               int BuyOrder = OrderSend(SYMBOL, OP_BUY, 0.03, Ask, 10, 0, 0, NULL, 0, 0, Green);
+            }
+         }
+         else if (OrderLots() == 0.03) {
+            if (OrderProfit() <= -3) {
+               int BuyOrder = OrderSend(SYMBOL, OP_BUY, 0.05, Ask, 10, 0, 0, NULL, 0, 0, Green);
+            }
+         }
+         else if (OrderLots() == 0.05) {
+            if (OrderProfit() <= -5) {
+               int BuyOrder = OrderSend(SYMBOL, OP_BUY, 0.08, Ask, 10, 0, 0, NULL, 0, 0, Green);
+            }
+         }
+         else if (OrderLots() == 0.08) {
+            if (OrderProfit() <= -8) {
+               int BuyOrder = OrderSend(SYMBOL, OP_BUY, 0.13, Ask, 10, 0, 0, NULL, 0, 0, Green);
+            }
+         }
+         else if (OrderLots() == 0.13) {
+            if (OrderProfit() <= -13) {
+               int BuyOrder = OrderSend(SYMBOL, OP_BUY, 0.21, Ask, 10, 0, 0, NULL, 0, 0, Green);
+            }
+         }
+         else if (OrderLots() == 0.21) {
+            if (OrderProfit() <= -21) {
+               int BuyOrder = OrderSend(SYMBOL, OP_BUY, 0.34, Ask, 10, 0, 0, NULL, 0, 0, Green);
+            }
+         }
+         else if (OrderLots() == 0.34) {
+            if (OrderProfit() <= -34) {
+               int BuyOrder = OrderSend(SYMBOL, OP_BUY, 0.55, Ask, 10, 0, 0, NULL, 0, 0, Green);
+            }
+         }
+         else if (OrderLots() == 0.55) {
+            if (OrderProfit() <= -55) {
+               int BuyOrder = OrderSend(SYMBOL, OP_BUY, 0.89, Ask, 10, 0, 0, NULL, 0, 0, Green);
+            }
+         }
+   }
+}
+
+
+
+void Add_order_sell() {
+   if (OrderSelect(last_order_sell(), SELECT_BY_TICKET) == true) {
+      if (OrderLots() == 0.01) {
+         if (OrderProfit() <= -1) {
+            int SellOrder = OrderSend(SYMBOL, OP_SELL, 0.02, Bid, 10, 0, 0, NULL, 0, 0, Red);
+         }
+      }
+      else if (OrderLots() == 0.02) {
+         if (OrderLots() <= -2) {
+            int SellOrder = OrderSend(SYMBOL, OP_SELL, 0.03, Bid, 10, 0, 0, NULL, 0, 0, Red);
+         }
+      }
+      else if (OrderLots() == 0.03) {
+         if (OrderLots() <= -3) {
+            int SellOrder = OrderSend(SYMBOL, OP_SELL, 0.05, Bid, 10, 0, 0, NULL, 0, 0, Red);
+         }
+      }
+      else if (OrderLots() == 0.05) {
+         if (OrderLots() <= -5) {
+            int SellOrder = OrderSend(SYMBOL, OP_SELL, 0.08, Bid, 10, 0, 0, NULL, 0, 0, Red);
+         }
+      }
+      else if (OrderLots() == 0.08) {
+         if (OrderLots() <= -8) {
+            int SellOrder = OrderSend(SYMBOL, OP_SELL, 0.13, Bid, 10, 0, 0, NULL, 0, 0, Red);
+         }
+      }
+      else if (OrderLots() == 0.13) {
+         if (OrderLots() <= -13) {
+            int SellOrder = OrderSend(SYMBOL, OP_SELL, 0.21, Bid, 10, 0, 0, NULL, 0, 0, Red);
+         }
+      }
+      else if (OrderLots() == 0.21) {
+         if (OrderLots() <= -21) {
+            int SellOrder = OrderSend(SYMBOL, OP_SELL, 0.34, Bid, 10, 0, 0, NULL, 0, 0, Red);
+         }
+      }
+      else if (OrderLots() == 0.34) {
+         if (OrderLots() <= -34) {
+            int SellOrder = OrderSend(SYMBOL, OP_SELL, 0.55, Bid, 10, 0, 0, NULL, 0, 0, Red);
+         }
+      }
+      else if (OrderLots() == 0.55) {
+         if (OrderLots() <= -55) {
+            int SellOrder = OrderSend(SYMBOL, OP_SELL, 0.89, Bid, 10, 0, 0, NULL, 0, 0, Red);
+         }
+      }
+   }
+}
+
+
+void OnTick() {
+
+   if (Count_buy_orders() == 0) {
+      int BuyOrder = OrderSend(SYMBOL, OP_BUY, 0.01, Ask, 10, 0, 0, NULL, 0, 0, Green);
+   }
+   if (Count_sell_orders() == 0) {
+      int SellOrder = OrderSend(SYMBOL, OP_SELL, 0.01, Bid, 10, 0, 0, NULL, 0, 0, Red);
+   }
+
+
+   Add_order_buy();
+   Add_order_sell();
+
+   if (OrderSelect(last_order_buy(), SELECT_BY_TICKET) == true) {
+      if (OrderLots() * 2 *  100 < OrderProfit()) {
+         while (OrdersTotal() != 0) {
+            if (OrderSelect(OrdersTotal() - 1, SELECT_BY_POS) == true) {
+               if (OrderType() == OP_BUY) {
+                  int  CloseBuyOrders = OrderClose(OrderTicket(), OrderLots(), Bid, 3, Red);
+               }
+            }
+         }
+      }
+   }
+
+   if (OrderSelect(last_order_sell(), SELECT_BY_TICKET) == true) {
+      if (OrderLots() * 2 *  100 < OrderProfit()) {
+         while (OrdersTotal() != 0) {
+            if (OrderSelect(OrdersTotal() - 1, SELECT_BY_POS) == true) {
+               if (OrderType() == OP_SELL) {
+                  int CloseSellOrder = OrderClose(OrderTicket(), OrderLots(), Ask, 3, Green);
+               }
+            }
+         }
+      }
+   }
+
+}
