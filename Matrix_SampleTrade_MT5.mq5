@@ -2,7 +2,7 @@
 CTrade  trade;
 CPositionInfo pos_info;
 
-
+input double Lot = 0.01;
 input int Risk_order = 9;
 input double Risk_lot = 0.89;
 input double Risk_profit = 3;
@@ -10,7 +10,7 @@ input double Risk_profit = 3;
 input bool Remove = false;
 input int MagicNumber;
 
-int x = 0;
+int send, x = 0;
 
 int OnInit() {
    trade.SetExpertMagicNumber(MagicNumber);
@@ -54,9 +54,9 @@ int Count_sell_orders() {
 void Add_order_buy(ulong last_buy_ticket) {
    if(pos_info.SelectByTicket(last_buy_ticket)) {
       if (PositionGetDouble(POSITION_VOLUME) < Risk_lot) {
-         double minprice = PositionGetDouble(POSITION_VOLUME) * 100;
-         if ( minprice - minprice * 2 > PositionGetDouble(POSITION_PROFIT) ) {
-            trade.Buy(NormalizeDouble(PositionGetDouble(POSITION_VOLUME) * 1.618, 2));
+         if ( -(PositionGetDouble(POSITION_VOLUME) * 100) > PositionGetDouble(POSITION_PROFIT) ) {
+            send = trade.Buy(NormalizeDouble(PositionGetDouble(POSITION_VOLUME) * 1.618, 2));
+            Sleep(500);
          }
       }
    }
@@ -65,9 +65,9 @@ void Add_order_buy(ulong last_buy_ticket) {
 void Add_order_sell(ulong last_buy_ticket) {
    if(pos_info.SelectByTicket(last_buy_ticket)) {
       if (PositionGetDouble(POSITION_VOLUME) < Risk_lot) {
-         double minprice = PositionGetDouble(POSITION_VOLUME) * 100;
-         if ( minprice - minprice * 2 > PositionGetDouble(POSITION_PROFIT) ) {
-            trade.Sell(NormalizeDouble(PositionGetDouble(POSITION_VOLUME) * 1.618, 2));
+         if ( -(PositionGetDouble(POSITION_VOLUME) * 100) > PositionGetDouble(POSITION_PROFIT) ) {
+            send = trade.Sell(NormalizeDouble(PositionGetDouble(POSITION_VOLUME) * 1.618, 2));
+            Sleep(500);
          }
       }
    }
@@ -118,11 +118,13 @@ void OnTick() {
    
    if (Remove == false) {
       if (Count_buy_orders() == 0) {
-         trade.Buy(0.01);
+         send = trade.Buy(Lot);
+         Sleep(500);
       }
       
       if (Count_sell_orders() == 0) {
-         trade.Sell(0.01);
+         send = trade.Sell(Lot);
+         Sleep(500);
       }
    }
    
