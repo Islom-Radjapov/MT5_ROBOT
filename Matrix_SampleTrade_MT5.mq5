@@ -1,62 +1,66 @@
-#include <Trade/Trade.mqh>
+#include <Trade\Trade.mqh>
+#include <Trade\PositionInfo.mqh>
+
 CTrade  trade;
 CPositionInfo pos_info;
 
 input double Lot = 0.01;
-input int Risk_order = 9;
-input double Risk_lot = 0.89;
-input double Risk_profit = 3;
+input int Profit_increase = 2;
 
 input bool Remove = false;
-input int MagicNumber = 1234;
+input double Risk_lot = 999;
+input int Risk_order = 9;
+input double Risk_profit = 3;
 
-int send, x = 0;
+input int MagicNumber = 1234;
+input string Order_Comment = "AUTO";
+
+int x, cnum;
+bool send;
+double prof;
 
 int OnInit() {
    trade.SetExpertMagicNumber(MagicNumber);
    return(INIT_SUCCEEDED);
 }
-  
+
 void OnDeinit(const int reason) {
    Comment("");
 }
 
-
 int Count_buy_orders() {
-   int res = 0;
+   cnum = 0;
    for(x = 0; x < PositionsTotal(); x++) {
       if(pos_info.SelectByIndex(x)) {
-         if (PositionGetInteger(POSITION_MAGIC) == MagicNumber) {
-            if (PositionGetInteger(POSITION_TYPE) == 0) {
-               res++;
+         if (pos_info.Magic() == MagicNumber) {
+            if (pos_info.PositionType() == 0) {
+               cnum++;
             }
          }
       }
    }  
-   return(res);
+   return(cnum);
 }
 
 int Count_sell_orders() {
-   int res = 0;
+   cnum = 0;
    for(x = 0; x < PositionsTotal(); x++) {
       if(pos_info.SelectByIndex(x)) {
-         if (PositionGetInteger(POSITION_MAGIC) == MagicNumber) {
-            if (PositionGetInteger(POSITION_TYPE) == 1) {
-               res++;
+         if (pos_info.Magic() == MagicNumber) {
+            if (pos_info.PositionType() == 1) {
+               cnum++;
             }
          }
       }
    }  
-   return(res);
+   return(cnum);
 }
-
 
 void Add_order_buy(ulong last_buy_ticket) {
    if(pos_info.SelectByTicket(last_buy_ticket)) {
-      if (PositionGetDouble(POSITION_VOLUME) < Risk_lot) {
-         if ( -(PositionGetDouble(POSITION_VOLUME) * 100) > PositionGetDouble(POSITION_PROFIT) ) {
-            send = trade.Buy(NormalizeDouble(PositionGetDouble(POSITION_VOLUME) * 1.618, 2));
-            Sleep(500);
+      if (pos_info.Volume() < Risk_lot) {
+         if ( -(pos_info.Volume() * 100) > pos_info.Profit() ) {
+            send = trade.Buy(NormalizeDouble(pos_info.Volume() * 1.618, 2), NULL, 0, 0, 0, Order_Comment);
          }
       }
    }
@@ -64,67 +68,71 @@ void Add_order_buy(ulong last_buy_ticket) {
 
 void Add_order_sell(ulong last_buy_ticket) {
    if(pos_info.SelectByTicket(last_buy_ticket)) {
-      if (PositionGetDouble(POSITION_VOLUME) < Risk_lot) {
-         if ( -(PositionGetDouble(POSITION_VOLUME) * 100) > PositionGetDouble(POSITION_PROFIT) ) {
-            send = trade.Sell(NormalizeDouble(PositionGetDouble(POSITION_VOLUME) * 1.618, 2));
-            Sleep(500);
+      if (pos_info.Volume() < Risk_lot) {
+         if ( -(pos_info.Volume() * 100) > pos_info.Profit() ) {
+            send = trade.Sell(NormalizeDouble(pos_info.Volume() * 1.618, 2), NULL, 0, 0, 0, Order_Comment);
          }
       }
    }
 }
 
 void Close_all_buy() {
-   for(x = PositionsTotal() - 1; x >= 0; x--) {
-      if(PositionGetInteger(POSITION_MAGIC) == MagicNumber) {
-         if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) {
-            trade.PositionClose(PositionGetTicket(x), clrBlack);
+   for(x = PositionsTotal(); x >= 0; x--) {
+      if (pos_info.SelectByIndex(x)) {
+         if(pos_info.Magic() == MagicNumber) {
+            if (pos_info.PositionType() == 0) {
+               send = trade.PositionClose(pos_info.Ticket(), clrBlack);
+            }
          }
-           
       }
    }
 }
 
 void Close_all_sell() {
-   for(x = PositionsTotal() - 1; x >= 0; x--) {
-      if(PositionGetInteger(POSITION_MAGIC) == MagicNumber) {
-         if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) {
-            trade.PositionClose(PositionGetTicket(x), clrBlack);
+   for(x = PositionsTotal(); x >= 0; x--) {
+      if (pos_info.SelectByIndex(x)) {
+         if(pos_info.Magic() == MagicNumber) {
+            if (pos_info.PositionType() == 1) {
+               send = trade.PositionClose(pos_info.Ticket(), clrBlack);
+            }
          }
       }
    }
 }
 
-void Close_all() {
-   for(x = PositionsTotal() - 1; x >= 0; x--) {
-      if(PositionGetInteger(POSITION_MAGIC) == MagicNumber) {
-         trade.PositionClose(PositionGetTicket(x), clrBlack);
-      }
-   }
-}
-
 double Count_profit() {
-   double prof = 0;
+   prof = 0;
    for(x = 0; x < PositionsTotal(); x++) {
       if(pos_info.SelectByIndex(x)) {
-         if (PositionGetInteger(POSITION_MAGIC) == MagicNumber) {
-            prof += PositionGetDouble(POSITION_PROFIT);
+          if(pos_info.Magic() == MagicNumber) {
+            prof += pos_info.Profit();
          }
       }
    }  
    return(prof);
 }
 
+void Close_all() {
+   for(x = PositionsTotal(); x >= 0; x--) {
+      if (pos_info.SelectByIndex(x)) {
+         if (pos_info.Magic() == MagicNumber) {
+            send = trade.PositionClose(pos_info.Ticket(), clrBlack);
+         }
+      }
+   }
+}
+
 void OnTick() {
    
    if (Remove == false) {
       if (Count_buy_orders() == 0) {
-         send = trade.Buy(Lot);
-         Sleep(500);
+         send = trade.Buy(Lot, NULL, 0, 0, 0, Order_Comment);
+         Print("SEND BUY  ", send);
       }
       
       if (Count_sell_orders() == 0) {
-         send = trade.Sell(Lot);
-         Sleep(500);
+         send = trade.Sell(Lot, NULL, 0, 0, 0, Order_Comment);
+         Print("SEND SELL  ", send);
       }
    }
    
@@ -133,17 +141,17 @@ void OnTick() {
 
     for(x = 0; x < PositionsTotal(); x++) {
       if(pos_info.SelectByIndex(x)) {
-         if (PositionGetInteger(POSITION_MAGIC) == MagicNumber) {
-            if (PositionGetInteger(POSITION_TYPE) == 0) {
-               if (lastime[0] < PositionGetInteger(POSITION_TIME_MSC) / 1000) {
-                  lastime[0] = PositionGetInteger(POSITION_TIME_MSC) / 1000;
-                  ticket[0] = PositionGetTicket(x);
+         if (pos_info.Magic() == MagicNumber) {
+            if (pos_info.PositionType() == 0) {
+               if (lastime[0] < pos_info.TimeMsc() / 1000) {
+                  lastime[0] = pos_info.TimeMsc() / 1000;
+                  ticket[0] = pos_info.Ticket();
                }
             }
-            if (PositionGetInteger(POSITION_TYPE) == 1) {
-               if (lastime[1] < PositionGetInteger(POSITION_TIME_MSC) / 1000) {
-                  lastime[1] = PositionGetInteger(POSITION_TIME_MSC) / 1000;
-                  ticket[1] = PositionGetTicket(x);
+            if (pos_info.PositionType() == 1) {
+               if (lastime[1] < pos_info.TimeMsc() / 1000) {
+                  lastime[1] = pos_info.TimeMsc() / 1000;
+                  ticket[1] = pos_info.Ticket();
                }
             }
          }
@@ -159,17 +167,17 @@ void OnTick() {
 
     for(x = 0; x < PositionsTotal(); x++) {
       if(pos_info.SelectByIndex(x)) {
-         if (PositionGetInteger(POSITION_MAGIC) == MagicNumber) {
-            if (PositionGetInteger(POSITION_TYPE) == 0) {
-               if (lastime1[0] < PositionGetInteger(POSITION_TIME_MSC) / 1000) {
-                  lastime1[0] = PositionGetInteger(POSITION_TIME_MSC) / 1000;
-                  ticket1[0] = PositionGetTicket(x);
+         if (pos_info.Magic() == MagicNumber) {
+            if (pos_info.PositionType() == 0) {
+               if (lastime1[0] < pos_info.TimeMsc() / 1000) {
+                  lastime1[0] = pos_info.TimeMsc() / 1000;
+                  ticket1[0] = pos_info.Ticket();
                }
             }
-            if (PositionGetInteger(POSITION_TYPE) == 1) {
-               if (lastime1[1] < PositionGetInteger(POSITION_TIME_MSC) / 1000) {
-                  lastime1[1] = PositionGetInteger(POSITION_TIME_MSC) / 1000;
-                  ticket1[1] = PositionGetTicket(x);
+            if (pos_info.PositionType() == 1) {
+               if (lastime1[1] < pos_info.TimeMsc() / 1000) {
+                  lastime1[1] = pos_info.TimeMsc() / 1000;
+                  ticket1[1] = pos_info.Ticket();
                }
             }
          }
@@ -179,26 +187,16 @@ void OnTick() {
 
    
    if(pos_info.SelectByTicket(ticket1[0])) {
-      if ( PositionGetDouble(POSITION_VOLUME) * 2 * 100 < PositionGetDouble(POSITION_PROFIT) ) {
+      if ( pos_info.Volume() * Profit_increase * 100 < pos_info.Profit() ) {
          Print("CLOSE ALL BUY");
-         while (true) {
-            Close_all_buy();
-            if (Count_buy_orders() == 0) {
-               break;
-            }
-         }
+         Close_all_buy();
       }
    }
    
    if(pos_info.SelectByTicket(ticket1[1])) {
-      if ( PositionGetDouble(POSITION_VOLUME) * 2 * 100 < PositionGetDouble(POSITION_PROFIT) ) {
+      if ( pos_info.Volume() * Profit_increase * 100 < pos_info.Profit() ) {
          Print("CLOSE ALL SELL");
-         while (true) {
-            Close_all_sell();
-            if (Count_buy_orders() == 0) {
-               break;
-            }
-         }
+         Close_all_sell();
       }
    }
    
@@ -207,28 +205,19 @@ void OnTick() {
    if (Count_buy_orders() >= Risk_order || Count_sell_orders() >= Risk_order) {
       if (Count_profit() > Risk_profit) {
          Print("CLOSE ALL");
-         while (true) {
-            Close_all();
-            if (Count_buy_orders() == 0) {
-               break;
-            }
-         }
+         Close_all();
       }
    }
    
    
    if (Remove == true) {
       if (Count_profit() > Risk_profit ) {
-         while (true) {
-            Close_all();
-            if (Count_buy_orders() == 0) {
-               break;
-            }
-         }
+         Print("CLOSE ALL REMOVE");
+         Close_all();
          ExpertRemove();
       }
    }
    
-   Comment("Working . . ."); 
+   Comment("Working . . .");
 
 }
