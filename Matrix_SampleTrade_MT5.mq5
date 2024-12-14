@@ -122,6 +122,7 @@ void Close_all() {
    }
 }
 
+
 void OnTick() {
    
    if (Remove == false) {
@@ -139,7 +140,7 @@ void OnTick() {
    ulong lastime[] = {0, 0};
    ulong ticket[] = {0, 0};
 
-    for(x = 0; x < PositionsTotal(); x++) {
+   for(x = 0; x < PositionsTotal(); x++) {
       if(pos_info.SelectByIndex(x)) {
          if (pos_info.Magic() == MagicNumber) {
             if (pos_info.PositionType() == 0) {
@@ -161,11 +162,10 @@ void OnTick() {
    Add_order_buy(ticket[0]);
    Add_order_sell(ticket[1]);
    
-   
    ulong lastime1[] = {0, 0};
    ulong ticket1[] = {0, 0};
 
-    for(x = 0; x < PositionsTotal(); x++) {
+   for(x = 0; x < PositionsTotal(); x++) {
       if(pos_info.SelectByIndex(x)) {
          if (pos_info.Magic() == MagicNumber) {
             if (pos_info.PositionType() == 0) {
@@ -219,5 +219,5 @@ void OnTick() {
    }
    
    Comment("Working . . .");
-
+   
 }
