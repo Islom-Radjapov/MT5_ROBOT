@@ -4,6 +4,7 @@
 CTrade  trade;
 CPositionInfo pos_info;
 
+
 input double Lot = 0.01;
 input int Profit_increase = 2;
 
@@ -12,6 +13,7 @@ input double Risk_lot = 999;
 input int Risk_order = 9;
 input double Risk_profit = 3;
 
+input int Spreed = 20;
 input int MagicNumber = 1234;
 input string Order_Comment = "AUTO";
 
@@ -38,7 +40,7 @@ int Count_buy_orders() {
             }
          }
       }
-   }  
+   }
    return(cnum);
 }
 
@@ -52,7 +54,7 @@ int Count_sell_orders() {
             }
          }
       }
-   }  
+   }
    return(cnum);
 }
 
@@ -61,6 +63,7 @@ void Add_order_buy(ulong last_buy_ticket) {
       if (pos_info.Volume() < Risk_lot) {
          if ( -(pos_info.Volume() * 100) > pos_info.Profit() ) {
             send = trade.Buy(NormalizeDouble(pos_info.Volume() * 1.618, 2), NULL, 0, 0, 0, Order_Comment);
+            Sleep(300);
          }
       }
    }
@@ -71,6 +74,7 @@ void Add_order_sell(ulong last_buy_ticket) {
       if (pos_info.Volume() < Risk_lot) {
          if ( -(pos_info.Volume() * 100) > pos_info.Profit() ) {
             send = trade.Sell(NormalizeDouble(pos_info.Volume() * 1.618, 2), NULL, 0, 0, 0, Order_Comment);
+            Sleep(300);
          }
       }
    }
@@ -125,15 +129,17 @@ void Close_all() {
 
 void OnTick() {
    
-   if (Remove == false) {
+   if (Remove == false && SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) < Spreed) {
       if (Count_buy_orders() == 0) {
          send = trade.Buy(Lot, NULL, 0, 0, 0, Order_Comment);
          Print("SEND BUY  ", send);
+         Sleep(300);
       }
       
       if (Count_sell_orders() == 0) {
          send = trade.Sell(Lot, NULL, 0, 0, 0, Order_Comment);
          Print("SEND SELL  ", send);
+         Sleep(300);
       }
    }
    
@@ -158,10 +164,10 @@ void OnTick() {
          }
       }
    }
-   
-   Add_order_buy(ticket[0]);
-   Add_order_sell(ticket[1]);
-   
+   if (SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) < Spreed) {
+      Add_order_buy(ticket[0]);
+      Add_order_sell(ticket[1]);
+   }
    ulong lastime1[] = {0, 0};
    ulong ticket1[] = {0, 0};
 
