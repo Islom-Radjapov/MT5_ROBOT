@@ -196,6 +196,9 @@ void OnTick() {
       if ( pos_info.Volume() * Profit_increase * 100 < pos_info.Profit() ) {
          Print("CLOSE ALL BUY");
          Close_all_buy();
+         Close_all_buy();
+         Close_all_buy();
+         Print("Remaining BUY orders => ", Count_buy_orders());
       }
    }
    
@@ -203,6 +206,9 @@ void OnTick() {
       if ( pos_info.Volume() * Profit_increase * 100 < pos_info.Profit() ) {
          Print("CLOSE ALL SELL");
          Close_all_sell();
+         Close_all_sell();
+         Close_all_sell();
+         Print("Remaining SELL orders => ", Count_sell_orders());
       }
    }
    
@@ -212,6 +218,9 @@ void OnTick() {
       if (Count_profit() > Risk_profit) {
          Print("CLOSE ALL");
          Close_all();
+         Close_all();
+         Close_all();
+         Print("Remaining ALL orders => ", Count_sell_orders() + Count_buy_orders());
       }
    }
    
@@ -220,6 +229,9 @@ void OnTick() {
       if (Count_profit() > Risk_profit ) {
          Print("CLOSE ALL REMOVE");
          Close_all();
+         Close_all();
+         Close_all();
+         Print("Remaining ALL orders => ", Count_sell_orders() + Count_buy_orders());
          ExpertRemove();
       }
    }
