@@ -144,6 +144,10 @@ double Find_lot(double lot1) {
       return 3.4;
    } else if (lot1 == 3.4) {
       return 5.5;
+   } else if (lot1 == 5.5) {
+      return 8.9;
+   } else if (lot1 == 8.9) {
+      return 1.44;
    }
    return 0;
 }
