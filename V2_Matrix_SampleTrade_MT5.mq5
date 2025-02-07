@@ -222,6 +222,7 @@ void OnTick() {
          Print("CLOSE ALL BUY");
          Close_all_buy();
          Close_all_buy();
+         Sleep(300);
          Close_all_buy();
          Print("Remaining BUY orders => ", Count_buy_orders());
       }
@@ -232,6 +233,7 @@ void OnTick() {
          Print("CLOSE ALL SELL");
          Close_all_sell();
          Close_all_sell();
+         Sleep(300);
          Close_all_sell();
          Print("Remaining SELL orders => ", Count_sell_orders());
       }
@@ -244,6 +246,7 @@ void OnTick() {
          Print("CLOSE ALL");
          Close_all();
          Close_all();
+         Sleep(300);
          Close_all();
          Print("Remaining ALL orders => ", Count_sell_orders() + Count_buy_orders());
       }
@@ -255,10 +258,21 @@ void OnTick() {
          Print("CLOSE ALL REMOVE");
          Close_all();
          Close_all();
+         Sleep(300);
          Close_all();
          Print("Remaining ALL orders => ", Count_sell_orders() + Count_buy_orders());
          ExpertRemove();
       }
+   }
+   
+   if (Remove == true && Count_sell_orders() + Count_buy_orders() == 0) {
+      Print("CLOSE ALL REMOVE");
+         Close_all();
+         Close_all();
+         Sleep(300);
+         Close_all();
+         Print("Remaining ALL orders => ", Count_sell_orders() + Count_buy_orders());
+         ExpertRemove();
    }
    
    Comment("Working . . .");
