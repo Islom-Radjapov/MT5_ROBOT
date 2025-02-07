@@ -11,7 +11,7 @@ input int Profit_increase = 2;
 input bool Remove = false;
 input double Risk_lot = 999;
 input int Risk_order = 9;
-input double Risk_profit = 3;
+input double Risk_profit = 33;
 
 input int Spreed = 20;
 input int MagicNumber = 1234;
