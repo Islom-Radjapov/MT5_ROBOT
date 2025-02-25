@@ -9,9 +9,9 @@ input double Lot = 0.04;
 input int Profit_increase = 2;
 
 input bool Remove = false;
-input double Risk_lot = 999;
 input int Risk_order = 7;
 input double Risk_profit = 12;
+input int Distance = 100;
 
 input int Spreed = 20;
 input int MagicNumber = 1234;
@@ -60,22 +60,20 @@ int Count_sell_orders() {
 
 void Add_order_buy(ulong last_buy_ticket) {
    if(pos_info.SelectByTicket(last_buy_ticket)) {
-      if (pos_info.Volume() < Risk_lot) {
-         if ( -(pos_info.Volume() * 100) > pos_info.Profit() ) {
-            send = trade.Buy(Find_lot(pos_info.Volume()), NULL, 0, 0, 0, Order_Comment);
-            Sleep(300);
-         }
+      if ( -(pos_info.Volume() * Distance) > pos_info.Profit() ) {
+         send = trade.Buy(Find_lot(StringToDouble(StringFormat("%.2f", pos_info.Volume() ))),
+                        NULL, 0, 0, 0, Order_Comment);
+         Sleep(300);
       }
    }
 }
 
 void Add_order_sell(ulong last_buy_ticket) {
    if(pos_info.SelectByTicket(last_buy_ticket)) {
-      if (pos_info.Volume() < Risk_lot) {
-         if ( -(pos_info.Volume() * 100) > pos_info.Profit() ) {
-            send = trade.Sell(Find_lot(pos_info.Volume()), NULL, 0, 0, 0, Order_Comment);
-            Sleep(300);
-         }
+      if ( -(pos_info.Volume() * Distance) > pos_info.Profit() ) {
+         send = trade.Sell(Find_lot(StringToDouble(StringFormat("%.2f", pos_info.Volume() ))),
+                        NULL, 0, 0, 0, Order_Comment);
+         Sleep(300);
       }
    }
 }
@@ -155,7 +153,6 @@ void Close_all() {
 }
 
 double Find_lot(double lot1) {
-
    if (lot1 == 0.04) { 
       return 0.08;
    } else if (lot1 == 0.08) {
@@ -180,7 +177,7 @@ double Find_lot(double lot1) {
    return 0;
 }
 
-void OnTick() {
+void OnTick() { //-------------------------------------------------------------------------------------------------------------------------------
    
    if (Remove == false && SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) < Spreed) {
       if (Count_buy_orders() == 0) {
