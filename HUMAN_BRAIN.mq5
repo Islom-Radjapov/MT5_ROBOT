@@ -4,7 +4,7 @@ CTrade  trade;
 CPositionInfo pos_info;
 
 double First_risk_percentage = 0.1;
-double Start_balance = 10000;
+double Start_balance = 100000;
 int random_hour;
 int random_min;
 
@@ -34,10 +34,11 @@ void OnTick() {
    TimeCurrent(timeStruct);
    int hour = timeStruct.hour;
    int minute = timeStruct.min;
-
+   //Print("hour ", hour);
+   //Print("minute ", minute);
    
    if (hour == random_hour && minute == random_min) {
-      OpenOrder(SelectPeriod(), Find_risk());
+      OpenOrder(CalculateATR(SelectPeriod()) / _Point, Find_risk());
       PrintFormat("Open Time: %02d:%02d", random_hour, random_min);
    }
 
@@ -54,6 +55,7 @@ void OpenOrder(int atr, double riskPercentage) {
       SymbolInfoDouble(_Symbol, SYMBOL_ASK) - atr * _Point,
       SymbolInfoDouble(_Symbol, SYMBOL_ASK) + atr * _Point
       );
+      ExpertRemove();
    } else {
       Print("Sell order");
       //Print(x, " is Odd"); // toq
@@ -61,6 +63,7 @@ void OpenOrder(int atr, double riskPercentage) {
       SymbolInfoDouble(_Symbol, SYMBOL_BID) + atr * _Point,
       SymbolInfoDouble(_Symbol, SYMBOL_BID) - atr * _Point
       );
+      ExpertRemove();
    }
 }
 
@@ -75,6 +78,7 @@ double CalculateATR(int period) {
       double tr = MathMax(high - low, MathMax(MathAbs(high - close_prev), MathAbs(low - close_prev)));
       sum += tr;
    }
+   Print("ATR ", sum / period);
    return sum / period;
 }
 
@@ -114,7 +118,7 @@ double CalculateLotSize(double riskPercentage, double stopLossPips) {
    double minLot = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
    double maxLot = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX);
    lotSize = MathMin(MathMax(lotSize, minLot), maxLot);
-   
+   Print("Lot ", lotSize);
    return lotSize;
 }
 
