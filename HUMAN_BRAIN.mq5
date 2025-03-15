@@ -4,17 +4,19 @@ CTrade  trade;
 CPositionInfo pos_info;
 
 double First_risk_percentage = 0.1;
-double Start_balance = 100000;
+double Start_balance = 10000;
+int start_hour   = 8;
+int start_minute = 30;
+int end_hour     = 9;
+int end_minute   = 30;
+
 int random_hour;
 int random_min;
 
 //+------------------------------------------------------------------------- OnInit +
 int OnInit() {
-   // Define the time range (in seconds)
-   int start_hour   = 8;
-   int start_minute = 30;
-   int end_hour     = 9;
-   int end_minute   = 30;
+
+
    // Convert the range into total minutes
    int start_time_min = start_hour * 60 + start_minute;
    int end_time_min   = end_hour * 60 + end_minute;
@@ -34,38 +36,42 @@ void OnTick() {
    TimeCurrent(timeStruct);
    int hour = timeStruct.hour;
    int minute = timeStruct.min;
-   //Print("hour ", hour);
-   //Print("minute ", minute);
    
    if (hour == random_hour && minute == random_min) {
-      OpenOrder(CalculateATR(SelectPeriod()) / _Point, Find_risk());
-      PrintFormat("Open Time: %02d:%02d", random_hour, random_min);
+      int period = SelectPeriod();
+      double atr = CalculateATR(period);
+      double riskPercentage = Find_risk();
+      double lot = CalculateLotSize(riskPercentage, atr);
+      
+      if(MathRand() % 2 == 0) {
+         //Print(x, " is Even"); //juft
+         trade.Buy(lot, _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_ASK),
+         SymbolInfoDouble(_Symbol, SYMBOL_ASK) - atr,
+         SymbolInfoDouble(_Symbol, SYMBOL_ASK) + atr, DoubleToString(riskPercentage)
+         );
+         PrintFormat("Open Time: %02d:%02d", random_hour, random_min );
+         Print("BUY order => ", _Symbol);
+         Print("Risk Percent => ", riskPercentage);
+         Print("LOT => ", lot);
+         Print("ATR => ", atr);
+         ExpertRemove();
+      } else {
+         //Print(x, " is Odd"); // toq
+         trade.Sell(lot, _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_BID),
+         SymbolInfoDouble(_Symbol, SYMBOL_BID) + atr,
+         SymbolInfoDouble(_Symbol, SYMBOL_BID) - atr, DoubleToString(riskPercentage)
+         );
+         PrintFormat("Open Time: %02d:%02d", random_hour, random_min );
+         Print("SELL order => ", _Symbol);
+         Print("Risk Percent => ", riskPercentage);
+         Print("LOT => ", lot);
+         Print("ATR => ", atr);
+         ExpertRemove();
+      }
    }
 
 }
 
-
-
-//+--------------------------------------------------------------------- Funcktion OpenOrder +
-void OpenOrder(int atr, double riskPercentage) {
-   if(MathRand() % 2 == 0) {
-      Print("Buy order");
-      //Print(x, " is Even"); //juft
-      trade.Buy(CalculateLotSize(riskPercentage, atr), _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_ASK),
-      SymbolInfoDouble(_Symbol, SYMBOL_ASK) - atr * _Point,
-      SymbolInfoDouble(_Symbol, SYMBOL_ASK) + atr * _Point
-      );
-      ExpertRemove();
-   } else {
-      Print("Sell order");
-      //Print(x, " is Odd"); // toq
-      trade.Sell(CalculateLotSize(riskPercentage, atr), _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_BID),
-      SymbolInfoDouble(_Symbol, SYMBOL_BID) + atr * _Point,
-      SymbolInfoDouble(_Symbol, SYMBOL_BID) - atr * _Point
-      );
-      ExpertRemove();
-   }
-}
 
 //+--------------------------------------------------------------------- Funcktion CalculateATR +
 double CalculateATR(int period) {
@@ -78,7 +84,6 @@ double CalculateATR(int period) {
       double tr = MathMax(high - low, MathMax(MathAbs(high - close_prev), MathAbs(low - close_prev)));
       sum += tr;
    }
-   Print("ATR ", sum / period);
    return sum / period;
 }
 
@@ -87,13 +92,11 @@ int SelectPeriod() {
    int list[] = {7,8,9,10,11,12,13,14,15,16,17,18,19};
    int size = ArraySize(list); // Ro‘yxat uzunligi
    int index = MathRand() % size; // 0 dan size-1 gacha indeks tanlash
-   Print("Period ", list[index]);
    return list[index]; // Tasodifiy elementni qaytarish
 }
 
 //+--------------------------------------------------------------------- Funcktion CalculateLotSize +
 double CalculateLotSize(double riskPercentage, double stopLossPips) {
-   Print("Risk Percentage ", riskPercentage);
    // Get the contract size for the symbol
    double contractSize = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE);
    
@@ -118,7 +121,6 @@ double CalculateLotSize(double riskPercentage, double stopLossPips) {
    double minLot = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
    double maxLot = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX);
    lotSize = MathMin(MathMax(lotSize, minLot), maxLot);
-   Print("Lot ", lotSize);
    return lotSize;
 }
 
@@ -140,12 +142,12 @@ double CalculateProfitForPosition(ulong positionID) {
 //+--------------------------------------------------------------------- Funcktion Find_risk +
 double Find_risk() {
 
-   
    //double lotSize = 0.0;
    double profit = 0.0;
    //datetime orderTime = 0;
    //ulong lastOrderTicket = 0;
    bool orderFound = false;
+   string orderComment = DoubleToString(First_risk_percentage);
    
    HistorySelect(0, TimeCurrent());
    for (int i = HistoryOrdersTotal() - 1; i >= 0; i--) {
@@ -160,6 +162,7 @@ double Find_risk() {
          // Calculate the profit for the position
          profit = CalculateProfitForPosition(positionID);
          
+         string orderComment = HistoryOrderGetString(orderTicket, ORDER_COMMENT);
          // Store the order ticket
          //lastOrderTicket = orderTicket;
          
@@ -181,18 +184,12 @@ double Find_risk() {
       if (profit > 0) {
          return First_risk_percentage;
       } else {
-         if (profit < -8 && profit > -20) {
-            return 0.2;
-         } else if (profit < -18 && profit > -40) {
-            return 0.4;
-         } else if (profit < -38 && profit > -80) {
-            return 0.7;
-         } else if (profit < -68 && profit > -140) {
-            return 1.4;
-         } else if (profit < -130 && profit > -280) {
-            return 2.1;
-         } else if (profit < -200 && profit > -400) {
-            return 4.9;
+         if (orderComment == DoubleToString(First_risk_percentage)) {
+            return First_risk_percentage + First_risk_percentage;
+         } else if (orderComment == DoubleToString(First_risk_percentage + First_risk_percentage)) {
+            return First_risk_percentage * 3;
+         } else {
+            return StringToDouble(orderComment) * 2;
          }
       }
    } /*else {
