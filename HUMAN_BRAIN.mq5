@@ -3,20 +3,22 @@
 CTrade  trade;
 CPositionInfo pos_info;
 
-double First_risk_percentage = 0.1;
-double Start_balance = 10000;
+double First_risk_percentage = 0.08;
+double Start_balance = 25000;
 int start_hour   = 8;
 int start_minute = 30;
 int end_hour     = 9;
 int end_minute   = 30;
 
+string commentt = "383";
+int MagicNumber = 383;
 int random_hour;
 int random_min;
 
 //+------------------------------------------------------------------------- OnInit +
 int OnInit() {
 
-
+   trade.SetExpertMagicNumber(MagicNumber);
    // Convert the range into total minutes
    int start_time_min = start_hour * 60 + start_minute;
    int end_time_min   = end_hour * 60 + end_minute;
@@ -37,17 +39,17 @@ void OnTick() {
    int hour = timeStruct.hour;
    int minute = timeStruct.min;
    
-   if (hour == random_hour && minute == random_min) {
+   //if (hour == random_hour && minute == random_min) {
       int period = SelectPeriod();
       double atr = CalculateATR(period);
       double riskPercentage = Find_risk();
-      double lot = CalculateLotSize(riskPercentage, atr);
+      double lot = CalculateLotSize(riskPercentage, atr / _Point);
       
       if(MathRand() % 2 == 0) {
          //Print(x, " is Even"); //juft
          trade.Buy(lot, _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_ASK),
          SymbolInfoDouble(_Symbol, SYMBOL_ASK) - atr,
-         SymbolInfoDouble(_Symbol, SYMBOL_ASK) + atr, DoubleToString(riskPercentage)
+         SymbolInfoDouble(_Symbol, SYMBOL_ASK) + atr, commentt
          );
          PrintFormat("Open Time: %02d:%02d", random_hour, random_min );
          Print("BUY order => ", _Symbol);
@@ -59,7 +61,7 @@ void OnTick() {
          //Print(x, " is Odd"); // toq
          trade.Sell(lot, _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_BID),
          SymbolInfoDouble(_Symbol, SYMBOL_BID) + atr,
-         SymbolInfoDouble(_Symbol, SYMBOL_BID) - atr, DoubleToString(riskPercentage)
+         SymbolInfoDouble(_Symbol, SYMBOL_BID) - atr, commentt
          );
          PrintFormat("Open Time: %02d:%02d", random_hour, random_min );
          Print("SELL order => ", _Symbol);
@@ -68,7 +70,7 @@ void OnTick() {
          Print("ATR => ", atr);
          ExpertRemove();
       }
-   }
+   //}
 
 }
 
@@ -142,60 +144,45 @@ double CalculateProfitForPosition(ulong positionID) {
 //+--------------------------------------------------------------------- Funcktion Find_risk +
 double Find_risk() {
 
-   //double lotSize = 0.0;
    double profit = 0.0;
-   //datetime orderTime = 0;
-   //ulong lastOrderTicket = 0;
    bool orderFound = false;
-   string orderComment = DoubleToString(First_risk_percentage);
-   
+   string orderComment;
+   ulong positionID = 0;
+   ulong orderTicket = 0;
    HistorySelect(0, TimeCurrent());
    for (int i = HistoryOrdersTotal() - 1; i >= 0; i--) {
       ulong orderTicket = HistoryOrderGetTicket(i);
       if (HistoryOrderGetString(orderTicket, ORDER_SYMBOL) == _Symbol) {
-         //lotSize = HistoryOrderGetDouble(orderTicket, ORDER_VOLUME_INITIAL);
-         //orderTime = (datetime)HistoryOrderGetInteger(orderTicket, ORDER_TIME_SETUP);
-         
-         // Get the position ID of the order
-         ulong positionID = HistoryOrderGetInteger(orderTicket, ORDER_POSITION_ID);
-         
-         // Calculate the profit for the position
-         profit = CalculateProfitForPosition(positionID);
-         
-         string orderComment = HistoryOrderGetString(orderTicket, ORDER_COMMENT);
-         // Store the order ticket
-         //lastOrderTicket = orderTicket;
-         
-         // Mark that an order was found
-         orderFound = true;
-         
-         // Exit the loop since we only need the last order
-         break;
+         if (HistoryOrderGetInteger(orderTicket, ORDER_MAGIC) == MagicNumber) {
+            positionID = HistoryOrderGetInteger(orderTicket, ORDER_POSITION_ID);
+            profit = CalculateProfitForPosition(positionID);
+            orderComment = HistoryOrderGetString(orderTicket, ORDER_COMMENT);
+            orderFound = true;
+            break;
+         }
       }
    }
 
-   // Print the results
+
    if (orderFound) {
-      //Print("Last Order History for ", _Symbol, ":");
-      //Print("Order Ticket: ", lastOrderTicket);
-      //Print("Lot Size: ", lotSize);
-      //Print("Profit: ", profit);
-      //Print("Order Time: ", orderTime);
-      if (profit > 0) {
-         return First_risk_percentage;
-      } else {
-         if (orderComment == DoubleToString(First_risk_percentage)) {
-            return First_risk_percentage + First_risk_percentage;
-         } else if (orderComment == DoubleToString(First_risk_percentage + First_risk_percentage)) {
-            return First_risk_percentage * 3;
-         } else {
-            return StringToDouble(orderComment) * 2;
-         }
+      if (profit < 0 && orderComment == "383") {
+         commentt = "544";
+         return 0.08;
+      } else if (profit < 0 && orderComment == "544") {
+         commentt = "695";
+         return 0.16;
+      } else if (profit < 0 && orderComment == "695") {
+         commentt = "116";
+         return 0.32;
+      } else if (profit < 0 && orderComment == "116") {
+         commentt = "457";
+         return 0.64;
+      } else if (profit < 0 && orderComment == "457") {
+         commentt = "348";
+         return 1.28;
       }
-   } /*else {
-      Print("No order history found for ", _Symbol);
-      return First_risk_percentage;
-   }*/
+   }
+   
+   commentt = "383";
    return First_risk_percentage;
 }
-
