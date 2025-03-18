@@ -5,12 +5,13 @@ CPositionInfo pos_info;
 
 double First_risk_percentage = 0.08;
 double Start_balance = 25000;
-int start_hour   = 8;
+input int Spreed = 20;
+/*int start_hour   = 8;
 int start_minute = 30;
 int end_hour     = 9;
-int end_minute   = 30;
+int end_minute   = 30;*/
 
-string commentt = "383";
+string commentt;
 int MagicNumber = 383;
 int random_hour;
 int random_min;
@@ -19,7 +20,7 @@ int random_min;
 int OnInit() {
 
    trade.SetExpertMagicNumber(MagicNumber);
-   // Convert the range into total minutes
+   /*// Convert the range into total minutes
    int start_time_min = start_hour * 60 + start_minute;
    int end_time_min   = end_hour * 60 + end_minute;
    // Generate a random number of minutes within the range
@@ -27,19 +28,20 @@ int OnInit() {
    // Extract the randomly generated hour and minute
    random_hour = random_minute / 60;
    random_min  = random_minute % 60;
-   PrintFormat("Random Time: %02d:%02d", random_hour, random_min);
+   PrintFormat("Random Time: %02d:%02d", random_hour, random_min);*/
    return(INIT_SUCCEEDED);
 }
 
 //+------------------------------------------------------------------------- OnTick +
 void OnTick() {
-
-   MqlDateTime timeStruct;
+   
+   /*MqlDateTime timeStruct;
    TimeCurrent(timeStruct);
    int hour = timeStruct.hour;
-   int minute = timeStruct.min;
+   int minute = timeStruct.min;*/
    
    //if (hour == random_hour && minute == random_min) {
+   if (Find_Symbol(_Symbol) && SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) < Spreed) {
       int period = SelectPeriod();
       double atr = CalculateATR(period);
       double riskPercentage = Find_risk();
@@ -56,7 +58,8 @@ void OnTick() {
          Print("Risk Percent => ", riskPercentage);
          Print("LOT => ", lot);
          Print("ATR => ", atr);
-         ExpertRemove();
+         Print("comment => ", commentt);
+         //ExpertRemove();
       } else {
          //Print(x, " is Odd"); // toq
          trade.Sell(lot, _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_BID),
@@ -68,10 +71,27 @@ void OnTick() {
          Print("Risk Percent => ", riskPercentage);
          Print("LOT => ", lot);
          Print("ATR => ", atr);
-         ExpertRemove();
+         Print("comment => ", commentt);
+         //ExpertRemove();
       }
-   //}
+   }
 
+}
+
+
+//+--------------------------------------------------------------------- Funcktion Find_Symbol +
+bool Find_Symbol(string sym) {
+
+   for(int x = 0; x < PositionsTotal(); x++) {
+      if(pos_info.SelectByIndex(x)) {
+         if (pos_info.Symbol() == sym) {
+            if (pos_info.Magic() == MagicNumber) {
+               return false;
+            }
+         }
+      }
+   }
+   return true;
 }
 
 
@@ -156,7 +176,7 @@ double Find_risk() {
          if (HistoryOrderGetInteger(orderTicket, ORDER_MAGIC) == MagicNumber) {
             positionID = HistoryOrderGetInteger(orderTicket, ORDER_POSITION_ID);
             profit = CalculateProfitForPosition(positionID);
-            orderComment = HistoryOrderGetString(orderTicket, ORDER_COMMENT);
+            orderComment = HistoryOrderGetString(positionID, ORDER_COMMENT);
             orderFound = true;
             break;
          }
@@ -186,3 +206,6 @@ double Find_risk() {
    commentt = "383";
    return First_risk_percentage;
 }
+
+
+
