@@ -3,13 +3,13 @@
 CTrade  trade;
 CPositionInfo pos_info;
 
-double First_risk_percentage = 0.08;
+double First_risk_percentage = 0.05;
 double Start_balance = 25000;
-input int Spreed = 20;
-/*int start_hour   = 8;
-int start_minute = 30;
-int end_hour     = 9;
-int end_minute   = 30;*/
+input int Spreed = 11;
+int start_hour   = 5; // 8  Toshkent soati 10dan
+//int start_minute = 30;
+int end_hour     = 18; // 21  Toshkent soati 21gacha
+//int end_minute   = 30;
 
 string commentt;
 int MagicNumber = 383;
@@ -35,47 +35,47 @@ int OnInit() {
 //+------------------------------------------------------------------------- OnTick +
 void OnTick() {
    
-   /*MqlDateTime timeStruct;
+   MqlDateTime timeStruct;
    TimeCurrent(timeStruct);
    int hour = timeStruct.hour;
-   int minute = timeStruct.min;*/
+   //int minute = timeStruct.min;
    
-   //if (hour == random_hour && minute == random_min) {
-   if (Find_Symbol(_Symbol) && SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) < Spreed) {
-      int period = SelectPeriod();
-      double atr = CalculateATR(period);
-      double riskPercentage = Find_risk();
-      double lot = CalculateLotSize(riskPercentage, atr / _Point);
-      
-      if(MathRand() % 2 == 0) {
-         //Print(x, " is Even"); //juft
-         trade.Buy(lot, _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_ASK),
-         SymbolInfoDouble(_Symbol, SYMBOL_ASK) - atr,
-         SymbolInfoDouble(_Symbol, SYMBOL_ASK) + atr, commentt
-         );
-         PrintFormat("Open Time: %02d:%02d", random_hour, random_min );
-         Print("BUY order => ", _Symbol);
-         Print("Risk Percent => ", riskPercentage);
-         Print("LOT => ", lot);
-         Print("ATR => ", atr);
-         Print("comment => ", commentt);
-         //ExpertRemove();
-      } else {
-         //Print(x, " is Odd"); // toq
-         trade.Sell(lot, _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_BID),
-         SymbolInfoDouble(_Symbol, SYMBOL_BID) + atr,
-         SymbolInfoDouble(_Symbol, SYMBOL_BID) - atr, commentt
-         );
-         PrintFormat("Open Time: %02d:%02d", random_hour, random_min );
-         Print("SELL order => ", _Symbol);
-         Print("Risk Percent => ", riskPercentage);
-         Print("LOT => ", lot);
-         Print("ATR => ", atr);
-         Print("comment => ", commentt);
-         //ExpertRemove();
+   if (hour >= start_hour && hour <= end_hour) {
+      if (Find_Symbol(_Symbol) && SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) < Spreed) {
+         int period = SelectPeriod();
+         double atr = CalculateATR(period);
+         double riskPercentage = Find_risk();
+         double lot = CalculateLotSize(riskPercentage, atr / _Point);
+         
+         if(MathRand() % 2 == 0) {
+            //Print(x, " is Even"); //juft
+            trade.Buy(lot, _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_ASK),
+            SymbolInfoDouble(_Symbol, SYMBOL_ASK) - atr,
+            SymbolInfoDouble(_Symbol, SYMBOL_ASK) + atr, commentt
+            );
+            PrintFormat("Open Time: %02d:%02d", random_hour, random_min );
+            Print("BUY order => ", _Symbol);
+            Print("Risk Percent => ", riskPercentage);
+            Print("LOT => ", lot);
+            Print("ATR => ", atr);
+            Print("comment => ", commentt);
+            //ExpertRemove();
+         } else {
+            //Print(x, " is Odd"); // toq
+            trade.Sell(lot, _Symbol, SymbolInfoDouble(_Symbol, SYMBOL_BID),
+            SymbolInfoDouble(_Symbol, SYMBOL_BID) + atr,
+            SymbolInfoDouble(_Symbol, SYMBOL_BID) - atr, commentt
+            );
+            PrintFormat("Open Time: %02d:%02d", random_hour, random_min );
+            Print("SELL order => ", _Symbol);
+            Print("Risk Percent => ", riskPercentage);
+            Print("LOT => ", lot);
+            Print("ATR => ", atr);
+            Print("comment => ", commentt);
+            //ExpertRemove();
+         }
       }
    }
-
 }
 
 
@@ -111,7 +111,7 @@ double CalculateATR(int period) {
 
 //+--------------------------------------------------------------------- Funcktion SelectPeriod +
 int SelectPeriod() {
-   int list[] = {7,8,9,10,11,12,13,14,15,16,17,18,19};
+   int list[] = {7,8,9,10,11,12,13,14};//,15,16,17,18,19};
    int size = ArraySize(list); // Ro‘yxat uzunligi
    int index = MathRand() % size; // 0 dan size-1 gacha indeks tanlash
    return list[index]; // Tasodifiy elementni qaytarish
@@ -185,25 +185,34 @@ double Find_risk() {
 
 
    if (orderFound) {
-      if (profit < 0 && orderComment == "383") {
-         commentt = "544";
-         return 0.08;
-      } else if (profit < 0 && orderComment == "544") {
-         commentt = "695";
-         return 0.16;
-      } else if (profit < 0 && orderComment == "695") {
-         commentt = "116";
-         return 0.32;
-      } else if (profit < 0 && orderComment == "116") {
-         commentt = "457";
-         return 0.64;
-      } else if (profit < 0 && orderComment == "457") {
-         commentt = "348";
-         return 1.28;
+      if (profit < 0 && orderComment == "67383") { // 2
+         commentt = "18394";
+         return 0.05;
+      } else if (profit < 0 && orderComment == "18394") { // 3
+         commentt = "62782";
+         return 0.1;
+      } else if (profit < 0 && orderComment == "62782") { // 4
+         commentt = "41657";
+         return 0.2;
+      } else if (profit < 0 && orderComment == "41657") { // 5
+         commentt = "17120";
+         return 0.4;
+      } else if (profit < 0 && orderComment == "17120") { // 6
+         commentt = "55769";
+         return 0.8;
+      } else if (profit < 0 && orderComment == "55769") { // 7
+         commentt = "9507";
+         return 1.6;
+      } else if (profit < 0 && orderComment == "9507") { // 8
+         commentt = "52180";
+         return 3.2;
+      } else if (profit < 0 && orderComment == "52180") { // 9
+         commentt = "54492";
+         return 6.4;
       }
    }
    
-   commentt = "383";
+   commentt = "67383";
    return First_risk_percentage;
 }
 
