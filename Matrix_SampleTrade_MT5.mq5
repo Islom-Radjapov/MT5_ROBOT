@@ -4,16 +4,17 @@
 CTrade  trade;
 CPositionInfo pos_info;
 
-
+input int start_hour = 5;
+input int end_hour = 20;
 input double Lot = 0.01;
 input int Profit_increase = 2;
 
 input bool Remove = false;
 input double Risk_lot = 999;
-input int Risk_order = 9;
+input int Risk_order = 6;
 input double Risk_profit = 3;
 
-input int Spreed = 20;
+input int Spreed = 10;
 input int MagicNumber = 1234;
 input string Order_Comment = "AUTO";
 
@@ -126,20 +127,32 @@ void Close_all() {
    }
 }
 
-
+// -----------------------------------------------------------------------------------------------------------------   Asosiy qism
 void OnTick() {
    
-   if (Remove == false && SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) < Spreed) {
-      if (Count_buy_orders() == 0) {
-         send = trade.Buy(Lot, NULL, 0, 0, 0, Order_Comment);
-         Print("SEND BUY  ", send);
-         Sleep(300);
-      }
-      
-      if (Count_sell_orders() == 0) {
-         send = trade.Sell(Lot, NULL, 0, 0, 0, Order_Comment);
-         Print("SEND SELL  ", send);
-         Sleep(300);
+   // Joriy vaqtni olish
+   MqlDateTime timeStruct;
+   TimeCurrent(timeStruct);
+   
+   // Soatni hisoblash (soat + minut/60.0)
+   double currentHour = timeStruct.hour + timeStruct.min/60.0;
+   
+   // Ish vaqti: 4:00 dan 21:00 gacha
+   bool isTradingTime = (currentHour > start_hour && currentHour < end_hour);
+   
+   if (isTradingTime) {
+      if (Remove == false && SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) < Spreed) {
+         if (Count_buy_orders() == 0) {
+            send = trade.Buy(Lot, NULL, 0, 0, 0, Order_Comment);
+            Print("SEND BUY  ", send);
+            Sleep(300);
+         }
+         
+         if (Count_sell_orders() == 0) {
+            send = trade.Sell(Lot, NULL, 0, 0, 0, Order_Comment);
+            Print("SEND SELL  ", send);
+            Sleep(300);
+         }
       }
    }
    
@@ -248,6 +261,19 @@ void OnTick() {
          Close_all();
          Print("Remaining ALL orders => ", Count_sell_orders() + Count_buy_orders());
          ExpertRemove();
+   }
+   
+   if (!isTradingTime) {
+      if (Count_sell_orders() + Count_buy_orders() != 0) {
+         if (Count_profit() > Risk_profit ) {
+            Print("CLOSE ALL Time");
+            Close_all();
+            Close_all();
+            Sleep(300);
+            Close_all();
+            Print("Remaining ALL orders => ", Count_sell_orders() + Count_buy_orders());
+         }
+      }
    }
    
    Comment("Working . . .");
