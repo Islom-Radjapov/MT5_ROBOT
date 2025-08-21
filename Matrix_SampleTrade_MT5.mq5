@@ -4,9 +4,10 @@
 CTrade  trade;
 CPositionInfo pos_info;
 
-input int start_hour = 5;
-input int end_hour = 20;
+input int start_hour = 0;
+input int end_hour = 24;
 input double Lot = 0.01;
+input int Distace = 150;
 input int Profit_increase = 2;
 
 input bool Remove = false;
@@ -14,9 +15,9 @@ input double Risk_lot = 999;
 input int Risk_order = 6;
 input double Risk_profit = 3;
 
-input int Spreed = 10;
-input int MagicNumber = 1234;
-input string Order_Comment = "AUTO";
+input int Spreed = 999;
+input int MagicNumber = 7099197;
+input string Order_Comment = "IslomRadjapov";
 
 int x, cnum;
 bool send;
@@ -62,7 +63,7 @@ int Count_sell_orders() {
 void Add_order_buy(ulong last_buy_ticket) {
    if(pos_info.SelectByTicket(last_buy_ticket)) {
       if (pos_info.Volume() < Risk_lot) {
-         if ( -(pos_info.Volume() * 100) > pos_info.Profit() ) {
+         if ( -(pos_info.Volume() * Distace) > pos_info.Profit() ) {
             send = trade.Buy(NormalizeDouble(pos_info.Volume() * 1.618, 2), NULL, 0, 0, 0, Order_Comment);
             Sleep(300);
          }
@@ -73,7 +74,7 @@ void Add_order_buy(ulong last_buy_ticket) {
 void Add_order_sell(ulong last_buy_ticket) {
    if(pos_info.SelectByTicket(last_buy_ticket)) {
       if (pos_info.Volume() < Risk_lot) {
-         if ( -(pos_info.Volume() * 100) > pos_info.Profit() ) {
+         if ( -(pos_info.Volume() * Distace) > pos_info.Profit() ) {
             send = trade.Sell(NormalizeDouble(pos_info.Volume() * 1.618, 2), NULL, 0, 0, 0, Order_Comment);
             Sleep(300);
          }
@@ -206,7 +207,7 @@ void OnTick() {
 
    
    if(pos_info.SelectByTicket(ticket1[0])) {
-      if ( pos_info.Volume() * Profit_increase * 100 < pos_info.Profit() ) {
+      if ( pos_info.Volume() * Profit_increase * Distace < pos_info.Profit() ) {
          Print("CLOSE ALL BUY");
          Close_all_buy();
          Close_all_buy();
@@ -217,7 +218,7 @@ void OnTick() {
    }
    
    if(pos_info.SelectByTicket(ticket1[1])) {
-      if ( pos_info.Volume() * Profit_increase * 100 < pos_info.Profit() ) {
+      if ( pos_info.Volume() * Profit_increase * Distace < pos_info.Profit() ) {
          Print("CLOSE ALL SELL");
          Close_all_sell();
          Close_all_sell();
