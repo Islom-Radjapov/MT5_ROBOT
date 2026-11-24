@@ -9,6 +9,7 @@ input int end_hour = 24;
 input double Lot = 0.01;
 input int Distace = 150;
 input int Profit_increase = 2;
+input double Martingale = 1.618;
 
 input bool Remove = false;
 input double Risk_lot = 999;
@@ -64,7 +65,7 @@ void Add_order_buy(ulong last_buy_ticket) {
    if(pos_info.SelectByTicket(last_buy_ticket)) {
       if (pos_info.Volume() < Risk_lot) {
          if ( -(pos_info.Volume() * Distace) > pos_info.Profit() ) {
-            send = trade.Buy(NormalizeDouble(pos_info.Volume() * 1.618, 2), NULL, 0, 0, 0, Order_Comment);
+            send = trade.Buy(NormalizeDouble(pos_info.Volume() * Martingale, 2), NULL, 0, 0, 0, Order_Comment);
             Sleep(300);
          }
       }
@@ -75,7 +76,7 @@ void Add_order_sell(ulong last_buy_ticket) {
    if(pos_info.SelectByTicket(last_buy_ticket)) {
       if (pos_info.Volume() < Risk_lot) {
          if ( -(pos_info.Volume() * Distace) > pos_info.Profit() ) {
-            send = trade.Sell(NormalizeDouble(pos_info.Volume() * 1.618, 2), NULL, 0, 0, 0, Order_Comment);
+            send = trade.Sell(NormalizeDouble(pos_info.Volume() * Martingale, 2), NULL, 0, 0, 0, Order_Comment);
             Sleep(300);
          }
       }
