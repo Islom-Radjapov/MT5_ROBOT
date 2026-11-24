@@ -1,22 +1,23 @@
 //+------------------------------------------------------------------+
 //|                                                 TrailReverse.mq5 |
 //|                                                                  |
-//|  Ishlash tartibi:                                                |
-//|   1. Robot yoqilishi bilan BUY ochiladi. SL narxdan "Masofa"     |
-//|      pastga qo'yiladi va aynan o'sha joyga SELL STOP qo'yiladi.  |
-//|   2. Narx tepaga yurgan sari SL va SELL STOP birga yuqoriga      |
-//|      suriladi (har "Surish qadami"da).                           |
-//|   3. Narx qaytib SL ga tegsa: BUY yopiladi, SELL STOP ishga      |
-//|      tushib SELL ochiladi. SELL ga "Masofa" yuqorida SL qo'yiladi|
-//|      va aynan o'sha joyga BUY STOP qo'yiladi.                    |
-//|   4. Narx pastga yurgan sari SL va BUY STOP pastga suriladi.     |
-//|   5. Shu tartib davom etadi: doim 1 ta ochiq order + 1 ta stop   |
-//|      order.                                                      |
+//|  Videodagi robot qoidalari (uning 1805 ta savdosidan aniqlangan):|
+//|   1. Ochiq order yo'q: narxdan "Masofa" yuqorida BUY STOP va     |
+//|      "Masofa" pastda SELL STOP turadi. Narx yaqinlashsa, ular    |
+//|      ham ketidan suriladi (BUY STOP pastga, SELL STOP tepaga).   |
+//|   2. Stop order ishga tushadi: yangi orderning SL i kirish       |
+//|      narxidan "Masofa" uzoqlikda bo'ladi.                        |
+//|   3. BUY ochiq: SL = Bid - Masofa. Narx har pointda ko'tarilsa,  |
+//|      SL ham ko'tariladi. SELL STOP aynan SL turgan joyda turadi. |
+//|   4. SELL ochiq: SL = Ask + Masofa. Narx tushgan sari SL ham     |
+//|      tushadi. BUY STOP aynan SL turgan joyda turadi.             |
+//|   5. SL urilsa, o'sha joydagi teskari stop order ishga tushadi.  |
+//|      Doim 1 ta ochiq order + 1 ta stop order bo'lib turadi.      |
 //|                                                                  |
-//|  Masofa va qadam NARX BIRLIGIDA (oltinda dollar): 3.0 = 3$.      |
-//|  Faqat HEDGING hisoblar uchun.                                   |
+//|  Masofa va qadam NARX BIRLIGIDA (oltinda dollar): 0.30 = 30 cent |
+//|  (0.10 lotda bitta zarar = 3$). Faqat HEDGING hisoblar uchun.    |
 //+------------------------------------------------------------------+
-#property version     "2.00"
+#property version     "3.00"
 #property description "Doim 1 ta ochiq order + 1 ta teskari stop order. SL va stop order narx ketidan suriladi."
 #property description "Masofa va qadam narx birligida (oltinda dollar). Faqat HEDGING hisoblar uchun."
 
@@ -25,13 +26,19 @@
 #include <Trade\OrderInfo.mqh>
 
 #define SLIPPAGE_POINTS 30   // bozor orderi uchun ruxsat etilgan sirpanish (punkt)
-#define WAIT_SECONDS    5    // ochiq order yo'qolsa, teskari order ishga tushishini kutish
+
+enum ENUM_START_MODE
+  {
+   START_BOTH_STOPS = 0,  // Ikki tomonga stop order (videodagidek)
+   START_BUY        = 1   // Darhol BUY ochish
+  };
 
 //==================================================================== Sozlamalar
 input group "=== Asosiy sozlamalar ==="
-input double InpLot        = 0.10;    // Lot
-input double InpDistance   = 3.0;     // Masofa ($): SL va stop order narxdan shuncha uzoqda
-input double InpStep       = 0.01;    // Surish qadami ($): 0.01 = har bir pointda
+input double          InpLot       = 0.10;             // Lot
+input double          InpDistance  = 0.30;             // Masofa ($): SL va stop order narxdan shuncha uzoqda
+input double          InpStep      = 0.01;             // Surish qadami ($): 0.01 = har bir pointda
+input ENUM_START_MODE InpStartMode = START_BOTH_STOPS; // Boshlash usuli
 
 input group "=== Ish vaqti (server vaqti) ==="
 input bool   InpUseTime    = false;   // Ish vaqtini cheklash
@@ -47,12 +54,11 @@ CTrade               trade;
 CPositionInfo        posInfo;
 COrderInfo           ordInfo;
 
-double               g_lot         = 0.0;            // broker qoidasiga moslangan lot
-int                  g_startMin    = 0;              // boshlanish (kun boshidan daqiqa)
-int                  g_endMin      = 0;              // tugash (kun boshidan daqiqa)
-datetime             g_pauseUntil  = 0;              // xatodan keyin qisqa pauza
-datetime             g_lastPosTime = 0;              // ochiq order oxirgi marta ko'rilgan vaqt
-ENUM_ORDER_TYPE_TIME g_timeType    = ORDER_TIME_GTC; // stop order muddati
+double               g_lot        = 0.0;            // broker qoidasiga moslangan lot
+int                  g_startMin   = 0;              // boshlanish (kun boshidan daqiqa)
+int                  g_endMin     = 0;              // tugash (kun boshidan daqiqa)
+datetime             g_pauseUntil = 0;              // xatodan keyin qisqa pauza
+ENUM_ORDER_TYPE_TIME g_timeType   = ORDER_TIME_GTC; // stop order muddati
 
 //+------------------------------------------------------------------+
 int OnInit()
@@ -76,9 +82,13 @@ int OnInit()
      }
 
    g_lot = NormalizeLot(InpLot);
-   PrintFormat("TrailReverse: %s | digits=%d | point=%g | stops level=%d | lot=%.2f | masofa=%s | qadam=%s",
+   double spread = SymbolInfoDouble(_Symbol, SYMBOL_ASK) - SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   PrintFormat("TrailReverse: %s | digits=%d | point=%g | stops level=%d | spred=%s | lot=%.2f | masofa=%s | qadam=%s",
                _Symbol, _Digits, _Point, (int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL),
-               g_lot, DoubleToString(Distance(), _Digits), DoubleToString(InpStep, _Digits));
+               DoubleToString(spread, _Digits), g_lot, DoubleToString(Distance(), _Digits),
+               DoubleToString(InpStep, _Digits));
+   if(spread > 0 && Distance() <= spread)
+      Print("TrailReverse: OGOHLANTIRISH - Masofa spreddan katta bo'lishi kerak, aks holda stop orderlar qo'yilmaydi.");
 
    //--- broker GTC orderlarga ruxsat bermasa, kunlik order ishlatiladi
    long expModes = SymbolInfoInteger(_Symbol, SYMBOL_EXPIRATION_MODE);
@@ -94,7 +104,7 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
   {
-   //--- robot grafikdan olib tashlansa, stop order o'chiriladi (ochiq order SL bilan qoladi)
+   //--- robot grafikdan olib tashlansa, stop orderlar o'chiriladi (ochiq order SL bilan qoladi)
    if(reason == REASON_REMOVE)
       DeleteOrders(-1);
    Comment("");
@@ -126,16 +136,19 @@ void OnTick()
 
    if(pos == 0)
      {
-      //--- SL urilgan bo'lsa, teskari stop order ishga tushishini biroz kutamiz
-      if(HasOrders() && TimeCurrent() - g_lastPosTime < WAIT_SECONDS)
-         return;
-      DeleteOrders(-1);
-      if(timeOk)
-         OpenFirstBuy(tick);   // robot yoqilganda (yoki ish vaqti boshlanganda) BUY
+      if(!timeOk)
+         DeleteOrders(-1);                         // ish vaqtidan tashqarida kirish yo'q
+      else if(InpStartMode == START_BUY && !HasOrders())
+         OpenFirstBuy(tick);                       // "Darhol BUY" rejimida birinchi kirish
+      else
+        {
+         //--- ochiq order yo'q: ikki tomonda stop order (videodagi "Video Buy/Sell Stop")
+         ManageFlatStop(ORDER_TYPE_BUY_STOP, tick);
+         ManageFlatStop(ORDER_TYPE_SELL_STOP, tick);
+        }
      }
    else if(posInfo.SelectByTicket(pos))
      {
-      g_lastPosTime = TimeCurrent();
       bool isBuy = (posInfo.PositionType() == POSITION_TYPE_BUY);
 
       if(!timeOk && InpCloseAtEnd)
@@ -148,10 +161,10 @@ void OnTick()
         {
          double sl = TrailPosition(pos, tick);                 // SL narx ketidan suriladi
          DeleteOrders(isBuy ? ORDER_TYPE_BUY_STOP : ORDER_TYPE_SELL_STOP);
-         if(timeOk && sl > 0)
+         if(timeOk && sl > 0)                                   // teskari order SL joyida ("Dynamic")
             ManageReverseOrder(isBuy ? ORDER_TYPE_SELL_STOP : ORDER_TYPE_BUY_STOP, sl, tick);
          else
-            DeleteOrders(-1);                                  // ish vaqtidan tashqarida yangi kirish yo'q
+            DeleteOrders(-1);
         }
      }
 
@@ -159,10 +172,10 @@ void OnTick()
   }
 
 //==================================================================== Ochiq order
-//--- Boshlang'ich BUY: SL darhol "Masofa" pastga qo'yiladi
+//--- "Darhol BUY" rejimi: SL kirish narxidan "Masofa" pastda
 void OpenFirstBuy(const MqlTick &tick)
   {
-   double sl = NormPrice(tick.bid - Distance());
+   double sl = NormPrice(tick.ask - Distance());
    if(!trade.Buy(g_lot, _Symbol, 0.0, sl, 0.0, "TrailReverse"))
       Fail("BUY ochish");
   }
@@ -199,6 +212,7 @@ ulong SyncPositions(bool &closedOld)
   }
 
 //--- SL ni narx ketidan suradi (faqat foyda tomonga). Amaldagi SL darajasini qaytaradi.
+//--- BUY: SL = Bid - Masofa,  SELL: SL = Ask + Masofa
 double TrailPosition(const ulong ticket, const MqlTick &tick)
   {
    if(!posInfo.SelectByTicket(ticket))
@@ -222,25 +236,41 @@ double TrailPosition(const ulong ticket, const MqlTick &tick)
    return(newSL);
   }
 
-//==================================================================== Stop order
-//--- Teskari stop orderni ochiq orderning SL i turgan joyda ushlab turadi
-void ManageReverseOrder(const ENUM_ORDER_TYPE type, const double level, const MqlTick &tick)
+//==================================================================== Stop orderlar
+//--- Ochiq order yo'q: stop order narxdan "Masofa"da turadi va narx ketidan
+//--- suriladi (BUY STOP faqat pastga, SELL STOP faqat tepaga)
+void ManageFlatStop(const ENUM_ORDER_TYPE type, const MqlTick &tick)
   {
    bool   isBuyStop = (type == ORDER_TYPE_BUY_STOP);
-   double price     = NormPrice(level);
-   double sl        = ReverseOrderSL(isBuyStop, price, tick);
+   double price     = isBuyStop ? NormPrice(tick.ask + Distance()) : NormPrice(tick.bid - Distance());
 
    ulong ticket = FindOrder(type);
    if(ticket == 0)
      {
-      bool ok = isBuyStop
-                ? trade.BuyStop(g_lot, price, _Symbol, sl, 0.0, g_timeType, 0, "TrailReverse")
-                : trade.SellStop(g_lot, price, _Symbol, sl, 0.0, g_timeType, 0, "TrailReverse");
-      if(!ok)
-         Fail(isBuyStop ? "BUY STOP qo'yish" : "SELL STOP qo'yish");
+      PlaceStop(isBuyStop, price);
       return;
      }
+   if(!ordInfo.Select(ticket))
+      return;
+   double cur  = ordInfo.PriceOpen();
+   double gain = isBuyStop ? (cur - price) : (price - cur);
+   if(gain < MinMove() || InFreeze(cur, isBuyStop ? tick.ask : tick.bid))
+      return;
+   MoveStop(ticket, isBuyStop, price);
+  }
 
+//--- Ochiq order bor: teskari stop order aynan uning SL i turgan joyda turadi
+void ManageReverseOrder(const ENUM_ORDER_TYPE type, const double level, const MqlTick &tick)
+  {
+   bool   isBuyStop = (type == ORDER_TYPE_BUY_STOP);
+   double price     = NormPrice(level);
+
+   ulong ticket = FindOrder(type);
+   if(ticket == 0)
+     {
+      PlaceStop(isBuyStop, price);
+      return;
+     }
    if(!ordInfo.Select(ticket))
       return;
    double cur = ordInfo.PriceOpen();
@@ -248,17 +278,29 @@ void ManageReverseOrder(const ENUM_ORDER_TYPE type, const double level, const Mq
       return;
    if(InFreeze(cur, isBuyStop ? tick.ask : tick.bid))
       return;
-   if(!trade.OrderModify(ticket, price, sl, 0.0, g_timeType, 0))
-      Fail(isBuyStop ? "BUY STOP ni surish" : "SELL STOP ni surish");
+   MoveStop(ticket, isBuyStop, price);
   }
 
-//--- Stop order ishga tushganda yangi orderning SL i "Masofa"da turishi uchun
-//--- (BUY SL Bid, SELL SL Ask bo'yicha ishlaydi, shuning uchun spred qo'shiladi)
-double ReverseOrderSL(const bool isBuyStop, const double price, const MqlTick &tick)
+//--- Stop orderning o'z SL i: narxidan "Masofa" uzoqlikda (BUY STOP - pastda, SELL STOP - tepada)
+double StopOrderSL(const bool isBuyStop, const double price)
   {
-   double spread = tick.ask - tick.bid;
-   return(isBuyStop ? NormPrice(price - spread - Distance())
-                    : NormPrice(price + spread + Distance()));
+   return(NormPrice(isBuyStop ? price - Distance() : price + Distance()));
+  }
+
+void PlaceStop(const bool isBuyStop, const double price)
+  {
+   double sl = StopOrderSL(isBuyStop, price);
+   bool ok = isBuyStop
+             ? trade.BuyStop(g_lot, price, _Symbol, sl, 0.0, g_timeType, 0, "TrailReverse")
+             : trade.SellStop(g_lot, price, _Symbol, sl, 0.0, g_timeType, 0, "TrailReverse");
+   if(!ok)
+      Fail(isBuyStop ? "BUY STOP qo'yish" : "SELL STOP qo'yish");
+  }
+
+void MoveStop(const ulong ticket, const bool isBuyStop, const double price)
+  {
+   if(!trade.OrderModify(ticket, price, StopOrderSL(isBuyStop, price), 0.0, g_timeType, 0))
+      Fail(isBuyStop ? "BUY STOP ni surish" : "SELL STOP ni surish");
   }
 
 //--- Berilgan turdagi bitta orderni qaytaradi, ortiqcha yoki boshqa lotdagilarni o'chiradi
